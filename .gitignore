@@ -1,0 +1,10 @@
+# something that should not be public
+modelsFinal/
+predict.py
+predict2.py
+
+# cache files etc
+*.pyc
+*.~
+*.bak
+__pycache__/
