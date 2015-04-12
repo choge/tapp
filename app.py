@@ -33,7 +33,7 @@ class QueryHandler(tornado.web.RequestHandler):
         # predicted = yield tornado.gen.Task(myhmm.predict, query_data)
         predicted = myhmm.predict(query_data)
         
-        self.render('result.html', result=predicted)
+        self.write(str(predicted))
 
 class ResultPageHandler(tornado.web.RequestHandler):
     """ResultPageHandler"""
