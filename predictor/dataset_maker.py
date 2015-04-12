@@ -4,7 +4,6 @@
 
 """
 
-from . import util
 from . import dataset
 from os.path import splitext, basename
 from . import fasta_manager
@@ -62,20 +61,6 @@ class DataSetMaker(object):
         data_list = self.reader.parse_db(dbname, username, password)
         return self.data_type(data_list)
 
-
-class FastaDataSetMaker(DataSetMaker):
-    """FastaDataSetMaker Fastaファイルから新しいデータセットを作る。
-    """
-
-    def __init__(self, builder=fasta_manager.ProteinFastaManager,
-                       reader=FastaReader,
-                       data_type=dataset.FastaDataSet):
-        """builderはFastaMakerあるいはFastaManager。
-        """
-        self.builder = builder
-        self.reader = reader(builder())
-        self.data_type = data_type
-
 class FastaReader( object ):
     """FastaUtil A utility class for fasta sequences.
 
@@ -122,3 +107,17 @@ class FastaReader( object ):
             txt = '>' + r['name'] + "\n" + r['sequence']
             yield self.manager.create(txt)
         con.close()
+
+class FastaDataSetMaker(DataSetMaker):
+    """FastaDataSetMaker Fastaファイルから新しいデータセットを作る。
+    """
+
+    def __init__(self, builder=fasta_manager.ProteinFastaManager,
+                       reader=FastaReader,
+                       data_type=dataset.FastaDataSet):
+        """builderはFastaMakerあるいはFastaManager。
+        """
+        self.builder = builder
+        self.reader = reader(builder())
+        self.data_type = data_type
+
