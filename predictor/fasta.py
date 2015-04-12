@@ -64,7 +64,7 @@ class Fasta(object, metaclass=abc.ABCMeta):
         要求します。"""
         # 引数の最初が'>'で始まっている＝ヘッダー行が含まれる
         if sequence[0] == '>':
-            (self.header, self.sequence) = sequence.split("\n", 1)
+            (self.header, self.sequence) = sequence.splitlines()
         elif header == "":
             raise ValueError("No header line found.")
         else:
