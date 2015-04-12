@@ -5,6 +5,7 @@ import tornado.web
 import tornado.gen
 import predictor
 import os
+import os.path
 
 from tornado.options import define, options
 
@@ -20,15 +21,17 @@ class TopPageHandler(tornado.web.RequestHandler):
 class QueryHandler(tornado.web.RequestHandler):
     """QueryHandler"""
 
-    @tornado.web.asynchronous
-    @tornado.gen.engine
     def post(self):
         """requires a set of fasta sequences, and returns the result"""
         query = self.get_argument('query')
         dataset_maker = predictor.FastaDataSetMaker()
         query_data = dataset_maker.read_from_string(query)
-        predictor = predictor.MyHmmPredictor()
-        predicted = yield tornado.gen.Task(predictor.predict, query_data)
+        myhmm = predictor.MyHmmPredictor(
+                filename=os.path.join(
+                    os.path.dirname(__file__), 'modelsFinal/ta4.xml'))
+        myhmm.set_decoder('TTHHHHHHHHHHHHHHHHHHHHHHHHHCCCCCGTT')
+        # predicted = yield tornado.gen.Task(myhmm.predict, query_data)
+        predicted = myhmm.predict(query_data)
         
         self.render('result.html', result=predicted)
 
