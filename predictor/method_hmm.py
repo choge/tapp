@@ -79,6 +79,7 @@ class MyHmmPredictor(method.Method):
         """Convert numerical representation into more readable form."""
         converted = {}
         for i, result in list(results.items()):
+            print(result)
             converted_tmp = ""
             for n in result[0]:  # result[1] is a likelihood
                 try:
