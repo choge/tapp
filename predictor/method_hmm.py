@@ -3,8 +3,8 @@
 
 import predictor.hmm.hmm as hmm
 import predictor.hmm.hmm_mp as hmm_mp
+import predictor.hmm.util as hmmutil
 import predictor.dataset
-import ghmm
 import numpy as np
 import predictor.method as method
 
@@ -28,11 +28,7 @@ class MyHmmPredictor(method.Method):
 
     def load(self, filename, cpus=1):
         """Read an XML file of GHMM."""
-        g = ghmm.HMMOpen(filename)
-        t = np.array(
-            [[g.getTransition(i, j) for j in range(g.N)] for i in range(g.N)])
-        e = np.array([g.getEmission(i) for i in range(g.N)]).T
-        i = np.array([g.getInitial(j) for j in range(g.N)])
+        (t, e, i) = hmmutil.load_ghmmxml(filename)
         if cpus == 1:
             self.method = hmm.HMM(t, e, i)
         elif cpus > 1:
