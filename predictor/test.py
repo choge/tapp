@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 
-import fasta_manager
-import dataset_maker
-import method_ghmm
+from . import fasta_manager
+from . import dataset_maker
+from . import method_ghmm
 import re
 #import pickle
 
@@ -43,7 +43,7 @@ datasets = {}
 results  = method_ghmm.GHMMResultSet( [] )
 
 dm = dataset_maker.FastaDataSetMaker( fasta_manager.ProteinFastaManager )
-for key in models.keys():
+for key in list(models.keys()):
     datasets[key] = dm.read_from_file( files[key] )
     models[key]   = method_ghmm.HmmPredictor( models[key] )
     # たぶん、ここでmethod_ghmmとかを使わないで、method maker的な
@@ -51,10 +51,10 @@ for key in models.keys():
 
 # Do the cross-validation
 written_model = {}
-for model_key in models.keys():
-    print("Model:%s" % model_key)
-    for test_key in models.keys():
-        print("\tTest:%s" % test_key)
+for model_key in list(models.keys()):
+    print(("Model:%s" % model_key))
+    for test_key in list(models.keys()):
+        print(("\tTest:%s" % test_key))
         if model_key == test_key:
             r = models[model_key].cross_valid( datasets[test_key], fold=10 )
         else:

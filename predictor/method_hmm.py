@@ -22,7 +22,7 @@ class MyHmmPredictor(method.Method):
         self.method = None
         self.valid_chars = valid_chars
         self.valid_char_dic = {
-            self.valid_chars[i]: i for i in xrange(len(self.valid_chars))}
+            self.valid_chars[i]: i for i in range(len(self.valid_chars))}
         self.decoder = ""
         self.load(filename, cpus)
 
@@ -30,9 +30,9 @@ class MyHmmPredictor(method.Method):
         """Read an XML file of GHMM."""
         g = ghmm.HMMOpen(filename)
         t = np.array(
-            [[g.getTransition(i, j) for j in xrange(g.N)] for i in xrange(g.N)])
-        e = np.array([g.getEmission(i) for i in xrange(g.N)]).T
-        i = np.array([g.getInitial(j) for j in xrange(g.N)])
+            [[g.getTransition(i, j) for j in range(g.N)] for i in range(g.N)])
+        e = np.array([g.getEmission(i) for i in range(g.N)]).T
+        i = np.array([g.getInitial(j) for j in range(g.N)])
         if cpus == 1:
             self.method = hmm.HMM(t, e, i)
         elif cpus > 1:
@@ -47,16 +47,16 @@ class MyHmmPredictor(method.Method):
         """Predict (or Decode) a sequence by Viterbi algorithm."""
         dataset_tmp = self.convert_dataset(dataset, reverse)
         result_tmp = {i: self.method.viterbi(d)      # i: identifier
-                      for i, d in dataset_tmp.items()} # d: (converted) data
+                      for i, d in list(dataset_tmp.items())} # d: (converted) data
         return self.convert_result(result_tmp, reverse=reverse)
 
     def train(self, dataset, reverse=False, if_debug=False, **args):
         """Train sequences using Baum-Welch algorithm."""
         dataset_tmp = self.convert_dataset(dataset, reverse)
         if if_debug:
-            return self.method.baum_welch(dataset_tmp.values(), do_debug=True, **args)
+            return self.method.baum_welch(list(dataset_tmp.values()), do_debug=True, **args)
         else:
-            self.method.baum_welch(dataset_tmp.values(), **args)
+            self.method.baum_welch(list(dataset_tmp.values()), **args)
 
     def convert_dataset(self, dataset, reverse=False, missing='ignore'):
         """Convert DataSet objects into numerical form.
@@ -71,7 +71,7 @@ class MyHmmPredictor(method.Method):
                     converted_tmp.append(self.valid_char_dic[c])
                 except KeyError:
                     if missing == 'ignore':
-                        print "invalid character %s found." % c
+                        print("invalid character %s found." % c)
                     elif missing == 'error':
                         raise ValueError("Invalid character: " + c)
             if reverse:
@@ -82,14 +82,14 @@ class MyHmmPredictor(method.Method):
     def convert_result(self, results, reverse=False):
         """Convert numerical representation into more readable form."""
         converted = {}
-        for i, result in results.items():
-            converted_tmp = u""
+        for i, result in list(results.items()):
+            converted_tmp = ""
             for n in result[0]:  # result[1] is a likelihood
                 try:
                     converted_tmp += self.decoder[int(n)]
                 except IndexError:
-                    print "%d is out of range (only %d states registered)." \
-                            % (n, len(self.decoder))
+                    print("%d is out of range (only %d states registered)." \
+                            % (n, len(self.decoder)))
             if reverse:
                 converted_tmp = converted_tmp[::-1]
             converted[i] = {'path': converted_tmp,
@@ -151,7 +151,7 @@ class HMMResultSet(predictor.dataset.DataSet):
         @param dataset  is a dictionary"""
         self.dataset_num += 1
         self.models.append(model)
-        for name, result in dataset.items():
+        for name, result in list(dataset.items()):
             # result is a dictionary which has two keys, likelihood and path.
             if name not in self.identifiers:
                 self.identifiers.append(name)
@@ -180,7 +180,7 @@ class HMMResultSet(predictor.dataset.DataSet):
                 try:
                     l[m] = self[name][m]['likelihood']
                 except KeyError:
-                    print "No model %s is registered." % m
+                    print("No model %s is registered." % m)
                     continue
         return l
 
@@ -210,8 +210,8 @@ class HMMResultSet(predictor.dataset.DataSet):
         Each calculated value is stored in
             self.container[id]['diff']['minuend-substrahend']
         The values that already exist are ignored when Calculating."""
-        for i in xrange(len(self.models)):
-            for j in xrange(i + 1, len(self.models)):
+        for i in range(len(self.models)):
+            for j in range(i + 1, len(self.models)):
                 m1 = self.models[i]
                 m2 = self.models[j]
                 keyname = m1 + "-" + m2
@@ -307,7 +307,7 @@ def roc(pos, neg):
     ber = 1.0
     thr = 0
     ans = np.zeros((2, len(mds)))
-    for x, n in zip(mds[::-1], range(len(mds))):
+    for x, n in zip(mds[::-1], list(range(len(mds)))):
         while tp < true and pos[tp] >= x:
             tp += 1
         while fp < false and neg[fp] >= x:
@@ -320,7 +320,7 @@ def roc(pos, neg):
     auc = np.array(
         [(ans[1][i] - ans[1][i - 1]) *
          (ans[0][i] + ans[0][i - 1]) / 2
-         for i in xrange(1, len(ans[0]))]).sum()
+         for i in range(1, len(ans[0]))]).sum()
     return {'roc': ans, 'auc': auc, 'ber': ber, 'thr': thr,
             'tp': sum(pos >= thr), 'fn': sum(pos < thr),
             'fp': sum(neg >= thr), 'tn': sum(neg < thr) }

@@ -4,10 +4,10 @@
 
 """
 
-import util
-import dataset
+from . import util
+from . import dataset
 from os.path import splitext, basename
-import fasta_manager
+from . import fasta_manager
 
 
 class DataSetMaker(object):

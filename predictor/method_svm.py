@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- encoding:utf-8 -*-
 
-import dataset
-import svmutil
-import method
+from . import dataset
+from . import svmutil
+from . import method
 import re
 import os
 from bitarray import bitarray
@@ -130,8 +130,8 @@ class SVMPredictor( method.Method ):
                     train.name = 'train'
                 else:
                     train.merge(datasets_cv[n][i]['train'])
-            print 'test:', test
-            print 'train: ', train
+            print('test:', test)
+            print('train: ', train)
             model = self.train(
                     [train], converter=converter,
                     return_model=True, convert_args=convert_args,
@@ -228,7 +228,7 @@ class SVMResult(dataset.DataSet):
                 correct += 1
             elif self.get_label(identifier) == -1 and seq['value'] < threshold:
                 correct += 1
-        print str(correct), str(self.seqnum)
+        print(str(correct), str(self.seqnum))
         return (0.0 + correct) / self.seqnum
 
     def calc_threshold(self):

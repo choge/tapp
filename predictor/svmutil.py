@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from svm import *
+from .svm import *
 
 def svm_read_problem(data_file_name):
 	"""
@@ -32,7 +32,7 @@ def svm_load_model(model_file_name):
 	"""
 	model = libsvm.svm_load_model(model_file_name)
 	if not model: 
-		print("can't open model file %s" % model_file_name)
+		print(("can't open model file %s" % model_file_name))
 		return None
 	model = toPyModel(model)
 	return model
@@ -147,11 +147,11 @@ def svm_train(arg1, arg2=None, arg3=None):
 		libsvm.svm_cross_validation(prob, param, nr_fold, target)	
 		ACC, MSE, SCC = evaluations(prob.y[:l], target[:l])
 		if param.svm_type in [EPSILON_SVR, NU_SVR]:
-			print("Cross Validation Mean squared error = %g" % MSE)
-			print("Cross Validation Squared correlation coefficient = %g" % SCC)
+			print(("Cross Validation Mean squared error = %g" % MSE))
+			print(("Cross Validation Squared correlation coefficient = %g" % SCC))
 			return MSE
 		else:
-			print("Cross Validation Accuracy = %g%%" % ACC)
+			print(("Cross Validation Accuracy = %g%%" % ACC))
 			return ACC
 	else:
 		m = libsvm.svm_train(prob, param)
@@ -204,8 +204,8 @@ def svm_predict(y, x, m, options=""):
 			raise ValueError("Model does not support probabiliy estimates")
 
 		if svm_type in [NU_SVR, EPSILON_SVR]:
-			print("Prob. model for test data: target value = predicted value + z,\n"
-			"z: Laplace distribution e^(-|z|/sigma)/(2sigma),sigma=%g" % m.get_svr_probability());
+			print(("Prob. model for test data: target value = predicted value + z,\n"
+			"z: Laplace distribution e^(-|z|/sigma)/(2sigma),sigma=%g" % m.get_svr_probability()));
 			nr_class = 0
 
 		prob_estimates = (c_double * nr_class)()
@@ -236,10 +236,10 @@ def svm_predict(y, x, m, options=""):
 	ACC, MSE, SCC = evaluations(y, pred_labels)
 	l = len(y)
 	if svm_type in [EPSILON_SVR, NU_SVR]:
-		print("Mean squared error = %g (regression)" % MSE)
-		print("Squared correlation coefficient = %g (regression)" % SCC)
+		print(("Mean squared error = %g (regression)" % MSE))
+		print(("Squared correlation coefficient = %g (regression)" % SCC))
 	else:
-		print("Accuracy = %g%% (%d/%d) (classification)" % (ACC, int(l*ACC/100), l))
+		print(("Accuracy = %g%% (%d/%d) (classification)" % (ACC, int(l*ACC/100), l)))
 
 	return pred_labels, (ACC, MSE, SCC), pred_values
 

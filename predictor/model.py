@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 
-import method
-import method_ghmm
+from . import method
+from . import method_ghmm
 
 
 class Model(object):

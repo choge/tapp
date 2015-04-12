@@ -14,15 +14,13 @@ import re
 import abc
 
 
-class Fasta(object):
+class Fasta(object, metaclass=abc.ABCMeta):
     """Fasta Fasta形式の配列データを扱うための抽象クラス。
 
     ヘッダー行のパース、データベースへの接続などは
     サブクラスによって実装される。抽象クラスは、インスタンスを
     作れないクラスのことなので、メソッドを実装するのは問題ない
     ・・・はず。"""
-
-    __metaclass__ = abc.ABCMeta
     # ヘッダーをパースする際に用いる、正規表現オブジェクト。
     # 実際はサブクラスで定義されます。
     re_identifier = re.compile("")
@@ -159,7 +157,7 @@ class Fasta(object):
         self.current_index = 0
         return self
 
-    def next(self):
+    def __next__(self):
         """Iterator処理に使われます。"""
         if self.current_index > self.seqlen:
             self.current_index += 1
@@ -211,14 +209,12 @@ class Fasta(object):
 # した方がいいかも。インスタンスを生成するときに、どっちを継承するか
 # 決められた方が、後々柔軟性があってやりやすそう。
 ###XXX###XXX###XXX###XXX###XXX###XXX###XXX###XXX###XXX###XXX###XXX###XXX###
-class ProteinFasta(Fasta):
+class ProteinFasta(Fasta, metaclass=abc.ABCMeta):
     """ProteinFasta アミノ酸配列を扱うためのクラスです。
 
     このクラスも抽象クラスで、個々のサブクラスで具体的な実装が
     期待されています。
     また、このクラスはBやZのような曖昧な文字を許可しません。"""
-
-    __metaclass__ = abc.ABCMeta
     valid_chars = "ACDEFGHIKLMNPQRSTVWY"
     invalid_chars = "BJOUXZ"
 
@@ -234,14 +230,12 @@ class ProteinFasta(Fasta):
         for c in self.invalid_chars:
             self.sequence = self.sequence.replace(c, '')
 
-class ExProteinFasta(ProteinFasta):
+class ExProteinFasta(ProteinFasta, metaclass=abc.ABCMeta):
     """ExProteinFasta アミノ酸配列を扱うためのクラスです。
 
     このクラスも抽象クラスです。ProteinFastaクラスと異なり、
     このクラスのインスタンスはBやZのような曖昧な文字を配列中に
     持つことが出来ます。ただしJおよびO、Uは許可されません。"""
-
-    __metaclass__ = abc.ABCMeta
     valid_chars = "ABCDEFGHIKLMNPQRSTVWXYZ"
 
     def is_valid_char(self, char):
@@ -249,12 +243,10 @@ class ExProteinFasta(ProteinFasta):
         判定します。"""
         return char in "ABCDEFGHIKLMNPQRSTVWXYZ"
 
-class DNAFasta(Fasta):
+class DNAFasta(Fasta, metaclass=abc.ABCMeta):
     """DNAFasta DNA配列を扱うためのクラス。
 
     このクラスも抽象クラス。"""
-
-    __metaclass__ = abc.ABCMeta
 
     def is_valid_char(self, char):
         """charがDNA配列として正しい文字であるかどうかを判定する。

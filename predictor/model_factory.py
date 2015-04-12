@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 
-import model
-import fasta_maker
-import fasta_manager
-import dataset_maker
+from . import model
+from . import fasta_maker
+from . import fasta_manager
+from . import dataset_maker
 
 class ModelFactory(object):
     """ModelFactory Modelを生成するためのクラス。

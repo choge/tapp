@@ -8,7 +8,7 @@ Prototypeパターンでオブジェクトを生成する。
 登録するのではなく、クラスを登録するようにしておく。
 (Pythonの辞書にはクラスも格納できる!!)"""
 
-import fasta
+from . import fasta
 import re
 
 class FastaManager( object ):
@@ -47,7 +47,7 @@ class FastaManager( object ):
             raise ValueError("Empty string.")
         elif unknown_str[0] != '>':
             raise ValueError("")
-        for prototype_name, regex in self.regex.items():
+        for prototype_name, regex in list(self.regex.items()):
             result = regex.match( unknown_str )
             if result: # 正規表現がマッチした場合
                 return self.prototypes[ prototype_name ]

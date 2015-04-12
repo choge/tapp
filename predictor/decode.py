@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 
-import method_ghmm
-import dataset_maker
+from . import method_ghmm
+from . import dataset_maker
 import re
 
 model_name = 'ta'
@@ -46,8 +46,8 @@ for dic in result.decode_all(reverse=reversed):
             tmd_pos = "N/A"
 
         dic['header'] += ' likelihood=' + str(likelihood) + ' tmd=' + tmd_pos
-        print dic['header']
+        print(dic['header'])
         for l in range(len(dic['seq'])):
-            print 'Seq : ' + dic['seq'][l]
-            print 'Path: ' + dic['path'][l] + "\n"
+            print('Seq : ' + dic['seq'][l])
+            print('Path: ' + dic['path'][l] + "\n")
 model.save('ta2.1.3.xml')

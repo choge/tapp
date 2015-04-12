@@ -3,7 +3,7 @@
 
 import random
 import copy
-import fasta
+from . import fasta
 import matplotlib as mp
 
 
@@ -67,7 +67,7 @@ class DataSet(object):
         if key in self.identifiers:
             raise IndexError(key + "は既に存在しています。")
         elif not isinstance(val, self.data_type):
-            print type(val)
+            print(type(val))
             raise TypeError(str(val) + " の型が不正です。")
         else:
             self.container[key] = val
@@ -96,7 +96,7 @@ class DataSet(object):
         self.current_index = 0
         return self
 
-    def next(self):
+    def __next__(self):
         """イテレータの一部。次の要素を返す。
         """
         if self.current_index < self.seqnum:
@@ -161,9 +161,9 @@ class DataSet(object):
 
     def sample(self, num):
         """データセットからnum個のデータをサンプリングする。"""
-        l = random.shuffle(range(len(self)))
+        l = random.shuffle(list(range(len(self))))
         for i in range(num):
-            print l
+            print(l)
             pass
 
     def split_to(self, num, is_random=True, do_copy=False):
@@ -246,7 +246,7 @@ class DataSet(object):
         if self.data_type != other.data_type:
             raise TypeError(other + "のデータの種類が違います。")
         if verbose:
-            print self, other
+            print(self, other)
         for key in other.identifiers:
             if key in self.identifiers:
                 continue
@@ -259,7 +259,7 @@ class DataSet(object):
                     self.labels[key] = other.get_label(key)
                 #self.identifiers.append(key)
         self._calc_stat()
-        if verbose: print self
+        if verbose: print(self)
 
     def merge_all(self, others, return_new=False):
         """複数のデータセットを一つにまとめる。
@@ -313,7 +313,7 @@ class DataSet(object):
 
     def convert2num(self, charlist):
         """文字列を数字にして返す。"""
-        char_dic = {charlist[i]:i for i in xrange(len(charlist))}
+        char_dic = {charlist[i]:i for i in range(len(charlist))}
         return [[char_dic[c] for c in seq] for seq in self]
 
 
