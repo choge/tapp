@@ -7,7 +7,7 @@ import os
 import sqlite3
 #import predictor.fasta_manager
 
-class FastaUtil( object ):
+class FastaReader( object ):
     """FastaUtil A utility class for fasta sequences.
 
     hogehoge
@@ -25,7 +25,7 @@ class FastaUtil( object ):
         if os.path.exists( filename ):
             f = open( filename, 'r' )
         else:
-            raise ValueError(filename + "は存在しません。")
+            raise ValueError(filename + " not found.")
 
         seq = ''
         fasta_list = []
@@ -42,11 +42,6 @@ class FastaUtil( object ):
         ## Add the last line
         fasta_list.append( self.manager.create(seq) )
         return fasta_list
-
-    def parse_db(self, dbname, user, password, query="", protein=True):
-        """データベースに接続して、配列を読み込む。
-        queryが指定されていない場合はどうしよっかな"""
-        pass
 
     def parse_sqlite(self, dbname, query='', username='', password=''):
         """SQLite3のデータを読み込み、そこからデータセットを作る。"""
