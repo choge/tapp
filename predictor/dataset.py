@@ -348,6 +348,7 @@ class FastaDataSet(DataSet):
         elif isinstance(labels, dict):
             self.labels = labels
         else:
+            self.labels = {}
             self.set_labels(0)
 
 
