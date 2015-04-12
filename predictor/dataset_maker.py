@@ -41,6 +41,13 @@ class DataSetMaker(object):
         data_list = self.reader.parse_file(filename)
         return self.data_type(data_list, name=name, origin=name, labels=label)
 
+    def read_from_string(self, s, name='', label=None):
+        """read sequences from a given string"""
+        if not name:
+            name = 'test'
+        data_list = self.reader.parse_string(s)
+        return self.data_type(data_list, name=name, origin=name, labels=label)
+
     def read_from_sqlite(self, dbname, query, name=""):
         """SQLite3データベースから、データセットを作成する。
         dbnameとqueryは必須。"""
@@ -96,6 +103,26 @@ class FastaReader( object ):
         ## Add the last line
         fasta_list.append( self.manager.create(seq) )
         return fasta_list
+    
+    def parse_string(self, s, protein=True):
+        """TODO: codes below are duplicated as parse_file(), so needs refactoring"""
+        seq = ''
+        fasta_list = []
+        line_no = 0
+        for line in s:
+            line_no += 1
+            if line == '' or line == "\n" or line[0] == '#':
+                continue
+            elif len( seq ) > 0 and line[0] == '>':
+                #seq_num += 1
+                fasta_list.append( self.manager.create(seq) )
+                seq = line
+            else:
+                seq += line
+        ## Add the last line
+        fasta_list.append( self.manager.create(seq) )
+        return fasta_list
+
 
     def parse_sqlite(self, dbname, query='', username='', password=''):
         """SQLite3のデータを読み込み、そこからデータセットを作る。"""
