@@ -22,14 +22,21 @@ class QueryHandler(tornado.web.RequestHandler):
     @tornado.web.asynchronous
     @tornado.gen.engine
     def post(self):
-    """requires a set of fasta sequences, and returns the result"""
-    query = self.get_argument('query')
-    dataset_maker = predictor.FastaDataSetMaker()
-    query_data = dataset_maker.read_from_string(query)
-    predictor = predictor.MyHmmPredictor()
-    predicted = yield tornado.gen.Task(predictor.predict, query_data)
-    
-    self.render('result.html')
+        """requires a set of fasta sequences, and returns the result"""
+        query = self.get_argument('query')
+        dataset_maker = predictor.FastaDataSetMaker()
+        query_data = dataset_maker.read_from_string(query)
+        predictor = predictor.MyHmmPredictor()
+        predicted = yield tornado.gen.Task(predictor.predict, query_data)
+        
+        self.render('result.html', result=predicted)
+
+class ResultPageHandler(tornado.web.RequestHandler):
+    """ResultPageHandler"""
+
+    def get(self, result_id):
+        """show the result page, which is stored in DB."""
+        pass
 
 if __name__ == '__main__':
     tornado.options.parse_command_line()
