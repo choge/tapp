@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>tapp - Prediction Result</title>
+  </head>
+  <body>
+    <header>
+      <h1>Prediction Result</h1>
+    </header>
+    <main>
+      <ol id="result_list">
+        {% for identifier, result in results.items() %}
+          <li>
+            ID: {{ identifier }} <br />
+            Likelihood: {{ result['likelihood'] }} <br />
+            Decoded Seq: {{ result['path'] }}
+          </li>
+        {% end %}
+      </ol>
+    </main>
+    <footer>
+      test
+    </footer>
+  </body>
+</html>
