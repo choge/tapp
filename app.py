@@ -21,8 +21,14 @@ class TopPageHandler(tornado.web.RequestHandler):
 class QueryHandler(tornado.web.RequestHandler):
     """QueryHandler"""
 
+    @tornado.web.asynchronous
+    @tornado.gen.engine
     def post(self):
-        """requires a set of fasta sequences, and returns the result"""
+        """requires a set of fasta sequences, and returns the result
+        
+        TODO: make myhmm a singleton?
+        TODO: return the blank page, and register the query to DB
+        (possibly mongoDB or postgreSQL??)"""
         query = self.get_argument('query')
         dataset_maker = predictor.FastaDataSetMaker()
         query_data = dataset_maker.read_from_string(query)
@@ -30,10 +36,23 @@ class QueryHandler(tornado.web.RequestHandler):
                 filename=os.path.join(
                     os.path.dirname(__file__), 'modelsFinal/ta4.xml'))
         myhmm.set_decoder('TTHHHHHHHHHHHHHHHHHHHHHHHHHCCCCCGTT')
-        # predicted = yield tornado.gen.Task(myhmm.predict, query_data)
-        predicted = myhmm.predict(query_data)
+        predicted = yield tornado.gen.Task(self.async_predict, 
+                myhmm, query_data, True)
         
-        self.write(str(predicted))
+        self.render('result.html', results=predicted)
+
+    def async_predict(self, myhmm, dataset, reverse=True, callback=None):
+        """Async wrapper for predict.
+        Though usually myhmm.predict() doesn't take much time, 
+        make it asynchrounous would be better as for performance."""
+        callback(myhmm.predict(dataset, reverse))
+        
+
+class QueryAPIHandler(tornado.web.RequestHandler):
+    """QueryAPIHandler  will return the result in JSON
+    
+    TODO: write"""
+    pass
 
 class ResultPageHandler(tornado.web.RequestHandler):
     """ResultPageHandler"""
