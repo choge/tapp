@@ -1,17 +1,84 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
-"""DataSetMaker データセットを作る。
+"""dataset_maker  is a module for creating datasets from a file or a string
 
+This module comprises several different classes, FastaBuilder, FastaReader,
+and DataSetMaker.
+FastaReader is a module for reading objects from a file or a string,
+FastaBuilder is a module for creating data objects.
+DataSetMaker is a high-level module that creates dataset from its source.
 """
 from os.path import splitext, basename
 import re
 
 from . import dataset
-from . import fasta_manager
 from . import fasta
 
+
+class FastaReader( object ):
+    """FastaUtil A utility class for fasta sequences.
+
+    hogehoge
+    """
+
+    def __init__(self, builder, protein=True):
+        """Constructor.
+        """
+        self.builder = builder
+
+    def parse_file(self, filename, protein=True):
+        """複数のfasta配列が入ってるファイルをパースして、
+        Fastaオブジェクトのリストにして返す。とりあえず
+        アミノ酸配列だけ対応したよ。"""
+        if os.path.exists( filename ):
+            f = open( filename, 'r' )
+        else:
+            raise ValueError(filename + " not found.")
+
+        seq = ''
+        fasta_list = []
+        #seq_num = 0
+        for line in f:
+            if line == '' or line == "\n" or line[0] == '#':
+                continue
+            elif len( seq ) > 0 and line[0] == '>':
+                #seq_num += 1
+                fasta_list.append( self.builder.create(seq) )
+                seq = line
+            else:
+                seq += line
+        ## Add the last line
+        fasta_list.append( self.builder.create(seq) )
+        return fasta_list
+    
+    def parse_string(self, s, protein=True):
+        """TODO: codes below are duplicated as parse_file(), so needs refactoring"""
+        seq = ''
+        fasta_list = []
+        line_no = 0
+        for line in s.splitlines():
+            line_no += 1
+            print(line_no, line)
+            if line == '' or line == "\n" or line[0] == '#':
+                continue
+            elif len( seq ) > 0 and line[0] == '>':
+                #seq_num += 1
+                print(len(fasta_list), seq)
+                fasta_list.append( self.builder.create(seq) )
+                seq = line + "\n"
+            elif line[0] == '>':
+                # the first line
+                seq += line + "\n"
+            else:
+                seq += line
+        ## Add the last line
+        fasta_list.append( self.builder.create(seq) )
+        return fasta_list
+
+
+
 class FastaBuilder( object ):
-    """Manager プロトタイプを登録・管理するクラス。
+    """FastaBuilder  is a module for creating data objects
 
     値の登録、登録された値からの適切なプロトタイプの選択などの
     基本的な機能を実装しておく。"""
@@ -112,6 +179,8 @@ class ProteinFastaBuilder( FastaBuilder ):
             're_organism'   : re.compile(".* \[(\w+ \w+(?: \w+)?)\].*"),
             }, re.compile("^>gi\|\d+\|ref") )
 
+
+
 class DataSetMaker(object):
     """DataSetMaker データセットを作るためのクラス。
 
@@ -170,78 +239,6 @@ class DataSetMaker(object):
         """データベースからデータセットをインポートする。"""
         data_list = self.reader.parse_db(dbname, username, password)
         return self.data_type(data_list)
-
-class FastaReader( object ):
-    """FastaUtil A utility class for fasta sequences.
-
-    hogehoge
-    """
-
-    def __init__(self, builder, protein=True):
-        """Constructor.
-        """
-        self.manager = builder
-
-    def parse_file(self, filename, protein=True):
-        """複数のfasta配列が入ってるファイルをパースして、
-        Fastaオブジェクトのリストにして返す。とりあえず
-        アミノ酸配列だけ対応したよ。"""
-        if os.path.exists( filename ):
-            f = open( filename, 'r' )
-        else:
-            raise ValueError(filename + " not found.")
-
-        seq = ''
-        fasta_list = []
-        #seq_num = 0
-        for line in f:
-            if line == '' or line == "\n" or line[0] == '#':
-                continue
-            elif len( seq ) > 0 and line[0] == '>':
-                #seq_num += 1
-                fasta_list.append( self.manager.create(seq) )
-                seq = line
-            else:
-                seq += line
-        ## Add the last line
-        fasta_list.append( self.manager.create(seq) )
-        return fasta_list
-    
-    def parse_string(self, s, protein=True):
-        """TODO: codes below are duplicated as parse_file(), so needs refactoring"""
-        seq = ''
-        fasta_list = []
-        line_no = 0
-        for line in s.splitlines():
-            line_no += 1
-            print(line_no, line)
-            if line == '' or line == "\n" or line[0] == '#':
-                continue
-            elif len( seq ) > 0 and line[0] == '>':
-                #seq_num += 1
-                print(len(fasta_list), seq)
-                fasta_list.append( self.manager.create(seq) )
-                seq = line + "\n"
-            elif line[0] == '>':
-                # the first line
-                seq += line + "\n"
-            else:
-                seq += line
-        ## Add the last line
-        fasta_list.append( self.manager.create(seq) )
-        return fasta_list
-
-
-    def parse_sqlite(self, dbname, query='', username='', password=''):
-        """SQLite3のデータを読み込み、そこからデータセットを作る。"""
-        con = sqlite3.connect(dbname)
-        con.row_factory = sqlite3.Row
-        cur = con.cursor()
-        cur.execute(query)
-        for r in cur:
-            txt = '>' + r['name'] + "\n" + r['sequence']
-            yield self.manager.create(txt)
-        con.close()
 
 class FastaDataSetMaker(DataSetMaker):
     """FastaDataSetMaker Fastaファイルから新しいデータセットを作る。
