@@ -24,7 +24,7 @@ class QueryHandler(tornado.web.RequestHandler):
     """QueryHandler"""
 
     @tornado.web.asynchronous
-    @tornado.gen.engine
+    @tornado.gen.coroutine
     def post(self):
         """requires a set of fasta sequences, and returns the result
         
@@ -50,7 +50,7 @@ class QueryAPIHandler(tornado.web.RequestHandler):
     TODO: write"""
     
     @tornado.web.asynchronous
-    @tornado.gen.engine
+    @tornado.gen.coroutine
     def post(self):
         """returns calculate"""
         query = self.get_argument('query')
@@ -112,4 +112,3 @@ if __name__ == '__main__':
     http_server = tornado.httpserver.HTTPServer(Application())
     http_server.listen(options.port)
     tornado.ioloop.IOLoop.instance().start()
-
