@@ -1,32 +1,27 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>tapp - Prediction Result</title>
-    <script type="text/javascript" src="{{ static_url("jquery-2.1.3.js") }}"></script>
-    <script type="text/javascript">
-      $(function getPredictionResult() {
-        var url = '/predict/' + $('#query_id').text();
-        var predicted = $.get(url);
-        $('#result_list').append(predicted);
-        });
-    </script>
-  </head>
-  <body>
-    <header>
-      <h1>Prediction Result</h1>
-    </header>
-    <main onload="getPredictionResult()">
-      <div style="display: none;" id="query_id">{{ query_id }}</div>
-      <ol id="query_list">
-        {% for query in query_data %}
-        <li>{{ str(query) }}</li>
-        {% end %}
-      </ol>
-      <ol id="result_list">
-      </ol>
-    </main>
-    <footer>
-      test
-    </footer>
-  </body>
-</html>
+{% extends "base.html" %}
+
+{% block header %}
+<h1>Prediction result: </h1>
+{% end %}
+
+{% block main %}
+
+<div style="display: none;" id="query_id">{{ query_id }}</div>
+<ol id="query_list">
+  {% for query in query_data %}
+  <li>{{ str(query) }}</li>
+  {% end %}
+</ol>
+<ol id="result_list" onload="getPredictionResult();">
+</ol>
+{% end %}
+
+{% block custom_js %}
+<script type="text/javascript">
+  $(function getPredictionResult() {
+    var url = '/predict/' + $('#query_id').text();
+    var predicted = $.get(url);
+    $('#result_list').append(predicted);
+  });
+</script>
+{% end %}
