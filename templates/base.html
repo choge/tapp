@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>{{ page_title }}</title>
+    <link type="text/css" rel="stylesheet" href="{{ static_url('materialize/css/materialize.min.css') }}"  media="screen,projection"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  </head>
+  <body class="container">
+    <header class="row">
+        {% block header %}
+        <h1 id="title" class="col s10 teal lighten-4 teal-text text-darken-4">Tail-anchored Protein Predictor</h1>
+        <h4 class="col s2 teal lighten-5 teal-text text-darken-5">Version 0.1</h4>
+        {% end %}
+    </header>
+    <main class="">
+      {% block main %}
+      {% end %}
+    </main>
+    <footer class="page-footer teal lighten-4 teal-text text-darken-4">
+      {% block footer %}
+      <p>Copyright 2015 <a href="http://www.bi.a.u-tokyo.ac.jp">Bilab</a></p>
+      {% end %}
+    </footer>
+    <script type="text/javascript" src="{{ static_url('jquery-2.1.3.js') }}"></script>
+    <script type="text/javascript" src="{{ static_url('materialize/js/materialize.min.js') }}"></script>
+    {% block custom_js %}
+    {% end %}
+  </body>
+</html>

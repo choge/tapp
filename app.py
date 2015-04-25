@@ -20,7 +20,8 @@ class TopPageHandler(tornado.web.RequestHandler):
     """TopPageHandler  """
 
     def get(self):
-        self.render('index.html')
+        self.render('index.html',
+                    page_title='TA Protein Predictor - top')
 
 
 class QueryHandler(tornado.web.RequestHandler):
@@ -95,7 +96,10 @@ class ResultPageHandler(tornado.web.RequestHandler):
     def get(self, result_id):
         """show the result page, which is stored in DB."""
         query_data = self.application.db[result_id]
-        self.render('result.html', query_id=result_id, query_data=query_data)
+        self.render('result.html', 
+                    query_id=result_id, 
+                    query_data=query_data,
+                    page_title="TA Protein Predictor : prediction result")
 
 class Application(tornado.web.Application):
     """Web app"""
