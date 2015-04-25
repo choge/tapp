@@ -62,7 +62,7 @@ class Fasta(object, metaclass=abc.ABCMeta):
         """コンストラクタです。
         Fasta形式そのままのテキストか、ヘッダーと配列部分を別々に
         要求します。"""
-        print("sequence: {0}\nheader: {1}".format(sequence, header))
+        #print("sequence: {0}\nheader: {1}".format(sequence, header))
         # 引数の最初が'>'で始まっている＝ヘッダー行が含まれる
         if sequence[0] == '>':
             (self.header, self.sequence) = sequence.splitlines()
