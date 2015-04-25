@@ -4,7 +4,6 @@
 import random
 import copy
 from . import fasta
-import matplotlib as mp
 
 
 class DataSet(object):
@@ -111,9 +110,8 @@ class DataSet(object):
         txt += '\tDataType: ' + str(self.data_type) + "\n"
         txt += '\tSeqNum  : ' + str(self.seqnum) + "\n"
         txt += '\tID 00000: ' + self.identifiers[0] + "\n"
-        txt += '\tID 00001: ' + self.identifiers[1] + "\n"
         txt += '\t...\n'
-        txt += '\tID ' + str(self.seqnum-1) + ': ' + self.identifiers[self.seqnum-1] + "\n"
+        txt += "\t...{0} sequence(s)".format(len(self))
         return txt
 
     def __repr__(self):
@@ -368,20 +366,3 @@ class RNADataSet(DataSet):
     pass
 
 
-class PredictionResult(DataSet):
-    """PredictionResult 予測結果を格納するクラス。
-
-    containerにはHMMならLikelihood、SVMなら一番左に出てくる
-    よくわかんない値。"""
-
-    def __init__(self, result_list, identifiers):
-        """これも手法毎にしよう。"""
-        pass
-
-    def plotroc(self):
-        '''plot an roc curve using matplotlib'''
-        tp, fp, auc = self.roc()
-        mp.rcParams['figure.figsize'] = 5, 5
-        mp.plot(fp, tp)
-        mp.plot([0, 1], [0, 1], color='#accaac')
-        mp.show()
