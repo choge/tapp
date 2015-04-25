@@ -8,7 +8,7 @@ FastaReader is a module for reading objects from a file or a string,
 FastaBuilder is a module for creating data objects.
 DataSetMaker is a high-level module that creates dataset from its source.
 """
-from os.path import splitext, basename
+import os.path
 import re
 
 from . import dataset
@@ -58,12 +58,12 @@ class FastaReader( object ):
         line_no = 0
         for line in s.splitlines():
             line_no += 1
-            print(line_no, line)
+            #print(line_no, line)
             if line == '' or line == "\n" or line[0] == '#':
                 continue
             elif len( seq ) > 0 and line[0] == '>':
                 #seq_num += 1
-                print(len(fasta_list), seq)
+                #print(len(fasta_list), seq)
                 fasta_list.append( self.builder.create(seq) )
                 seq = line + "\n"
             elif line[0] == '>':
@@ -209,7 +209,7 @@ class DataSetMaker(object):
         各DataSetクラスは新しいインスタンスを生成する。
         """
         if not name:
-            name, ext = splitext( basename( filename ) )
+            name, ext = os.path.splitext( os.path.basename( filename ) )
         data_list = self.reader.parse_file(filename)
         return self.data_type(data_list, name=name, origin=name, labels=label)
 
