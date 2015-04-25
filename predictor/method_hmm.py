@@ -42,7 +42,7 @@ class MyHmmPredictor(method.Method):
     def predict(self, dataset, reverse=False, **args):
         """Predict (or Decode) a sequence by Viterbi algorithm."""
         dataset_tmp = self.convert_dataset(dataset, reverse)
-        result_tmp = {i: self.method.viterbi(d)      # i: identifier
+        result_tmp = {i: self.method.viterbi(d, return_omega=True)      # i: identifier
                       for i, d in list(dataset_tmp.items())} # d: (converted) data
         return self.convert_result(result_tmp, reverse=reverse)
 
@@ -79,7 +79,6 @@ class MyHmmPredictor(method.Method):
         """Convert numerical representation into more readable form."""
         converted = {}
         for i, result in list(results.items()):
-            print(result)
             converted_tmp = ""
             for n in result[0]:  # result[1] is a likelihood
                 try:
@@ -92,6 +91,8 @@ class MyHmmPredictor(method.Method):
             converted[i] = {'path': converted_tmp,
                             'pathnum': np.array(result[0]),
                             'likelihood': result[1]}
+            if len(result) > 2:
+                converted[i]['omega'] = result[2]
         return converted
 
     def reset_valid_chars(self, chars=""):
