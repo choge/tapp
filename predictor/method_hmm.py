@@ -89,7 +89,7 @@ class MyHmmPredictor(method.Method):
             if reverse:
                 converted_tmp = converted_tmp[::-1]
             converted[i] = {'path': converted_tmp,
-                            'pathnum': np.array(result[0]),
+                            'pathnum': result[0],
                             'likelihood': result[1]}
             if len(result) > 2:
                 converted[i]['omega'] = result[2]
