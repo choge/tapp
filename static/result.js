@@ -18,6 +18,15 @@ function formatSequences(original, decoded) {
   return formatted;
 }
 
+function tableHead() {
+  return '<thead><tr>'
+    + '<th data-field="score">score</th>'
+    + '<th data-field="ta">TA model</th>'
+    + '<th data-field="sp">SP model</th>'
+    + '<th data-field="mp">MP model</th>'
+    + '</tr></thead>'
+}
+
 $(function () {
   // collapsible initialization
   $('.collapsible').collapsible({
@@ -43,10 +52,17 @@ $(function () {
       $.each(data, function(id, result) {
         var seq = $('#' + selectorEscape(id) + ' > .hide').text();
         var $result = $('#' + selectorEscape(id) + ' > .collapsible-body');
+        var l_ta = result["likelihood"];
+        var l_sp = result["likelihood_sp"];
+        var l_mp = result["likelihood_mp"];
+        var len = seq.length;
         $result.html(
             '<div class="row valign-wrapper">'
             + '<div class="col s2 offset-s1 valign">Likelihood</div>'
-            + '<div class="col s9 valign">' + result["likelihood"] + '</div>'
+            + '<div class="col s9 valign">'
+            + '<table class="striped">' + tableHead()
+            + '<tbody><tr><td>tmp</td><td>' + l_ta + '</td><td>' + l_sp + '</td><td>' + l_mp + '</td></tr></tbody></table>'
+            + '</div>'
             + '</div>'
             + '<div class="row valign-wrapper">'
             + '<div class="col s2 offset-s1 valign">Decoded Sequence</div>'
