@@ -1,27 +1,58 @@
 {% extends "base.html" %}
 
 {% block header %}
-<h1>Prediction result: </h1>
+<div id="title" class="teal darken-4 white-text">
+  <h2 class="z-depth-2 center-align">Prediction result</h2>
+</div>
 {% end %}
 
 {% block main %}
 
 <div style="display: none;" id="query_id">{{ query_id }}</div>
-<ol id="query_list">
+<div class="container" id="status">
+  <div class="row">
+    <div class="col s2 teal lighten-5">STATUS</div>
+    <div class="col s4 teal lighten-4" id="status-text">CALCULATING...</div>
+    <div class="col s6" id="status-progress">
+      <div class="progress">
+        <div class="indeterminate"></div>
+      </div>
+    </div>
+  </div>
+  <div class="row valign-wrapper" id="email-address">
+    <div class="input-field col s10 valign">
+      <i class="mdi-content-mail small prefix" id="input-icon-mail"></i>
+      <input id="email" type="email" class="validate">
+      <label for="input-icon-mail">Email</label>
+    </div>
+    <div class="col s2 valign">
+      <button class="btn waves-effect waves-light" type="submit" name="action">Submit
+        <i class="mdi-content-send right"></i>
+      </button>
+    </div>
+  </div>
+  <div class="row" id="notification">
+    It may take some time to finish calculation in case you have requested
+    many or long sequences. (Approximately 10 secs / 100 seqs) <br />
+    You can input your email-address above and you will be informed
+    when the calculation has finished.
+  </div>
+</div>
+
+<h4>Your result:</h4>
+<ul id="result_list" class="collapsible" data-collapsible="expandable">
   {% for query in query_data %}
-  <li>{{ str(query) }}</li>
+    <li id="{{ query.identifier }}">
+      <div class="collapsible-header truncate">{{ query.identifier }}</div>
+      <div class="collapsible-body" style="margin-left: 20px">
+        Loading...
+      </div>
+    </li>
   {% end %}
-</ol>
-<ol id="result_list" onload="getPredictionResult();">
-</ol>
+</ul>
+
 {% end %}
 
 {% block custom_js %}
-<script type="text/javascript">
-  $(function getPredictionResult() {
-    var url = '/predict/' + $('#query_id').text();
-    var predicted = $.get(url);
-    $('#result_list').append(predicted);
-  });
-</script>
+<script type="text/javascript" src="{{ static_url('result.js') }}"></script>
 {% end %}
