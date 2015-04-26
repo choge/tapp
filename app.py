@@ -56,10 +56,20 @@ class QueryAPIHandler(tornado.web.RequestHandler):
                 filename=os.path.join(
                     os.path.dirname(__file__), 'modelsFinal/ta4.xml'))
         myhmm.set_decoder('TTHHHHHHHHHHHHHHHHHHHHHHHHHCCCCCGTT')
+        sphmm = predictor.MyHmmPredictor(
+                filename=os.path.join(
+                    os.path.dirname(__file__), 'modelsFinal/sp.xml'))
+        mphmm = predictor.MyHmmPredictor(
+                filename=os.path.join(
+                    os.path.dirname(__file__), 'modelsFinal/mp.xml'))
         predicted = yield tornado.gen.Task(self.async_predict, 
                 myhmm, query_data, True)
+        predicted_sp = yield tornado.gen.Task(self.async_predict,
+                sphmm, query_data, False)
+        predicted_mp = yield tornado.gen.Task(self.async_predict,
+                mphmm, query_data, False)
         
-        predicted = self.convert_numpy_types(predicted)
+        predicted = self.convert_numpy_types(predicted, predicted_sp, predicted_mp)
         self.write(json.dumps(predicted))
 
     def async_predict(self, myhmm, dataset, reverse=True, callback=None):
@@ -68,7 +78,7 @@ class QueryAPIHandler(tornado.web.RequestHandler):
         make it asynchrounous would be better as for performance."""
         callback(myhmm.predict(dataset, reverse))
 
-    def convert_numpy_types(self, predicted):
+    def convert_numpy_types(self, predicted, predicted_sp, predicted_mp):
         """As numpy types such as 'numpy.int64' cannot be converted into 
         JSON format, so make these values into native python values.
         
@@ -86,6 +96,8 @@ class QueryAPIHandler(tornado.web.RequestHandler):
             converted['omega'] = [i.item() for i in dic['omega']]
             converted['likelihood'] = dic['likelihood'].item()
             converted['path'] = dic['path']
+            converted['likelihood_sp'] = predicted_sp[seq_id]['likelihood'].item()
+            converted['likelihood_mp'] = predicted_mp[seq_id]['likelihood'].item()
             new_result[seq_id] = converted
         return new_result
         
