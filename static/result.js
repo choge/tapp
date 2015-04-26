@@ -2,6 +2,22 @@ function selectorEscape(val){
   return val.replace(/[ !"#$%&'()*+,.\/:;<=>?@\[\\\]^`{|}~]/g, '\\$&');
 }
 
+function formatSequences(original, decoded) {
+  // format each string to 60 columns for each row
+  // @param original : original amino acid sequences
+  // @param decoded  : decoded sequences which comprises G, C, H, T
+  //                 : (G .. Globular, C .. Cap, H .. Hydrophobic, T .. Tail)
+  splitted_original = original.match(/.{1,60}/g);
+  splitted_decoded  = decoded.match(/.{1,60}/g);
+  formatted = "";
+  for (var i = 0; i < splitted_original.length; i++) {
+    formatted += "SEQUENCE:" + splitted_original[i] + "<br>";
+    formatted += "&nbsp;DECODED:" + splitted_decoded[i] + "<br>";
+    formatted += "<br>";
+  }
+  return formatted;
+}
+
 $(function () {
   // collapsible initialization
   $('.collapsible').collapsible({
@@ -25,16 +41,18 @@ $(function () {
 
       // show each result
       $.each(data, function(id, result) {
+        var seq = $('#' + selectorEscape(id) + ' > .hide').text();
         var $result = $('#' + selectorEscape(id) + ' > .collapsible-body');
         $result.html(
-            '<div class="row">'
-            + '<div class="col s2 offset-s1">Likelihood</div>'
-            + '<div class="col s9">' + result["likelihood"] + '</div>'
+            '<div class="row valign-wrapper">'
+            + '<div class="col s2 offset-s1 valign">Likelihood</div>'
+            + '<div class="col s9 valign">' + result["likelihood"] + '</div>'
             + '</div>'
-            + '<div class="row">'
-            + '<div class="col s2 offset-s1">Decoded Sequences</div>'
-            + '<blockquote class="col s9">' + result["path"] + '</div>'
-            + '</div>'
+            + '<div class="row valign-wrapper">'
+            + '<div class="col s2 offset-s1 valign">Decoded Sequence</div>'
+            + '<blockquote class="col s9 valign" style="overflow: scroll; font-family: monospace;">'
+            + formatSequences(seq, result["path"])
+            + '</blockquote>'
             );
       });
     });
