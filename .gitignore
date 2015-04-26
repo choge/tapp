@@ -2,6 +2,7 @@
 modelsFinal/
 predict.py
 predict2.py
+queries/db
 
 # cache files etc
 *.pyc
