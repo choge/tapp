@@ -5,7 +5,7 @@ import tornado.web
 import tornado.gen
 import os
 import os.path
-import uuid
+import hashlib
 import shelve
 import json
 import numpy
@@ -38,7 +38,7 @@ class QueryHandler(tornado.web.RequestHandler):
         query = self.get_argument('query')
         dataset_maker = predictor.FastaDataSetMaker()
         query_data = dataset_maker.read_from_string(query)
-        identifier = str(uuid.uuid4())
+        identifier = hashlib.sha256(query.encode('utf-8')).hexdigest()
         self.application.db[identifier] = query_data
         
         self.redirect("result/{0}".format(identifier), permanent=True)
