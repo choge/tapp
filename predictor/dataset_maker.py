@@ -160,24 +160,25 @@ class ProteinFastaBuilder( FastaBuilder ):
         self.prototypes = {}
         self.default_prototype = fasta.BasicProteinFasta
 
+        # nested classes cannot be pickled.
         # SwissProt
-        self.new_class('SwissProt', (fasta.BasicProteinFasta,), {
-            're_identifier' : re.compile("^>sp\|[^\|]+\|(\S+) .*"),
-            're_accession'  : re.compile("^>sp\|([^\|]+)\|.*"),
-            're_organism'   : re.compile(".* OS=(\w+ \w+(?: [^=]+)?) .*"),
-            }, re.compile("^>sp") )
-        # SwissProt
-        self.new_class('TrEMBLE', (fasta.BasicProteinFasta,), {
-            're_identifier' : re.compile("^>tr\|[^\|]+\|(\S+) .*"),
-            're_accession'  : re.compile("^>tr\|([^\|]+)\|.*"),
-            're_organism'   : re.compile(".* OS=(\w+ \w+(?: [^=]+)?) .*"),
-            }, re.compile("^>tr") )
-        # GenBank / RefSeq
-        self.new_class('GenBank_refseq', (fasta.BasicProteinFasta, ), {
-            're_identifier' : re.compile("^>gi\|\d+\|ref\|([^\|]+)\|? .*"),
-            're_accession'  : re.compile("^>gi\|(\d+)\|ref.*"),
-            're_organism'   : re.compile(".* \[(\w+ \w+(?: \w+)?)\].*"),
-            }, re.compile("^>gi\|\d+\|ref") )
+        #self.new_class('SwissProt', (fasta.BasicProteinFasta,), {
+        #    're_identifier' : re.compile("^>sp\|[^\|]+\|(\S+) .*"),
+        #    're_accession'  : re.compile("^>sp\|([^\|]+)\|.*"),
+        #    're_organism'   : re.compile(".* OS=(\w+ \w+(?: [^=]+)?) .*"),
+        #    }, re.compile("^>sp") )
+        ## SwissProt
+        #self.new_class('TrEMBLE', (fasta.BasicProteinFasta,), {
+        #    're_identifier' : re.compile("^>tr\|[^\|]+\|(\S+) .*"),
+        #    're_accession'  : re.compile("^>tr\|([^\|]+)\|.*"),
+        #    're_organism'   : re.compile(".* OS=(\w+ \w+(?: [^=]+)?) .*"),
+        #    }, re.compile("^>tr") )
+        ## GenBank / RefSeq
+        #self.new_class('GenBank_refseq', (fasta.BasicProteinFasta, ), {
+        #    're_identifier' : re.compile("^>gi\|\d+\|ref\|([^\|]+)\|? .*"),
+        #    're_accession'  : re.compile("^>gi\|(\d+)\|ref.*"),
+        #    're_organism'   : re.compile(".* \[(\w+ \w+(?: \w+)?)\].*"),
+        #    }, re.compile("^>gi\|\d+\|ref") )
 
 
 

@@ -260,7 +260,7 @@ class BasicProteinFasta(ProteinFasta):
     このクラスは、特定のフォーマットに対応していないFasta配列を扱います。
     そのため、connect_dbおよびparse_headerの一部はサポートされていません。"""
 
-    re_identifier = re.compile("^>([^\s^\|]+)(?:[\s\|]+|$)")
+    re_identifier = re.compile("^>(.+)$")
     re_accession  = re.compile("^>([^\s^\|]+)[\s\|]+")
     re_organism   = re.compile("^>([^\s^\|]+)[\s\|]+")
 
