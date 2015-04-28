@@ -59,9 +59,11 @@ class QueryAPIHandler(tornado.web.RequestHandler):
         sphmm = predictor.MyHmmPredictor(
                 filename=os.path.join(
                     os.path.dirname(__file__), 'modelsFinal/sp.xml'))
+        sphmm.set_decoder('SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSGGCCCCCHHHHHHHHHHHHHHHHHHHHHHHHH')
         mphmm = predictor.MyHmmPredictor(
                 filename=os.path.join(
                     os.path.dirname(__file__), 'modelsFinal/mp.xml'))
+        mphmm.set_decoder('SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSGLLLLLLLLLLLLLLLLLLLLCCCCCHHHHHHHHHHHHHHHHHHHHHHHHH')
         predicted = yield tornado.gen.Task(self.async_predict, 
                 myhmm, query_data, True)
         predicted_sp = yield tornado.gen.Task(self.async_predict,
