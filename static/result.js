@@ -20,10 +20,9 @@ function formatSequences(original, decoded) {
 
 function tableHead() {
   return '<thead><tr>'
-    + '<th data-field="score">score</th>'
-    + '<th data-field="ta">TA model</th>'
-    + '<th data-field="sp">SP model</th>'
-    + '<th data-field="mp">MP model</th>'
+    + '<th data-field="is_ta">Result</th>'
+    + '<th data-field="score">Score</th>'
+    + '<th data-field="has_tmd">TMD</th>'
     + '</tr></thead>'
 }
 
@@ -52,16 +51,19 @@ $(function () {
       $.each(data, function(id, result) {
         var seq = $('#' + selectorEscape(id) + ' > .hide').text();
         var $result = $('#' + selectorEscape(id) + ' > .collapsible-body');
-        var l_ta = result["likelihood"];
-        var l_sp = result["likelihood_sp"];
-        var l_mp = result["likelihood_mp"];
+        var score = result["score"];
+        var has_tmd = result["has_tmd"];
+        var is_ta = result["is_ta"];
         var len = seq.length;
         $result.html(
             '<div class="row valign-wrapper">'
             + '<div class="col s2 offset-s1 valign">Likelihood</div>'
             + '<div class="col s9 valign">'
-            + '<table class="striped">' + tableHead()
-            + '<tbody><tr><td>tmp</td><td>' + l_ta + '</td><td>' + l_sp + '</td><td>' + l_mp + '</td></tr></tbody></table>'
+            + '<table class="striped responsive-table">' + tableHead()
+            + '<tbody><tr>' 
+            + '<td>' + is_ta + '</td>' 
+            + '<td>' + score + '</td>' 
+            + '<td>' + has_tmd + '</td></tr></tbody></table>'
             + '</div>'
             + '</div>'
             + '<div class="row valign-wrapper">'
