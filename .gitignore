@@ -8,4 +8,5 @@ queries/db
 *.pyc
 *.~
 *.bak
+*.un~
 __pycache__/
