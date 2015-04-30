@@ -27,6 +27,8 @@ function tableHead() {
 }
 
 $(function () {
+  // setup the modal help
+  $('.modal-trigger').leanModal();
 
   // retreieve date before requesting result
   var date_before = new Date();
