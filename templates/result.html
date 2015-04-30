@@ -1,14 +1,25 @@
 {% extends "base.html" %}
 
 {% block header %}
-<div id="title" class="teal darken-4 white-text">
-  <h2 class="z-depth-2 center-align">Prediction result</h2>
+<div id="title" class="navbar-fixed">
+  <nav>
+    <div class="nav-wrapper teal darken-4 white-text">
+      <a href="#" class="brand-logo">Prediction result</a>
+      <ul class="right hide-on-med-and-down">
+        <li><a href="#title">Page top</a></li>
+        <li><a href="#result_summary_title">Summary table</a></li>
+        <li><a href="#result_list_title">Detail list</a></li>
+        <li><a href="/">Home</a></li>
+      </ul>
+    </div>
+  </nav>
 </div>
 {% end %}
 
 {% block main %}
 
 <div style="display: none;" id="query_id">{{ query_id }}</div>
+
 <div class="container" id="status">
   <div class="row">
     <div class="col s2 teal lighten-5">STATUS</div>
@@ -31,7 +42,7 @@
       </button>
     </div>
   </div>
-  <div class="row" id="notification">
+  <div class="col s12" id="notification">
     It may take some time to finish calculation in case you have requested
     many or long sequences. (Approximately 10 secs / 100 seqs) <br />
     You can input your email-address above and you will be informed
@@ -39,12 +50,39 @@
   </div>
 </div>
 
-<h4>Your result:</h4>
-<ul id="result_list" class="collapsible" data-collapsible="expandable">
+
+<h4 id="result_summary_title">Your results:</h4>
+<table class="striped row" id="result_summary">
+  <thead>
+    <tr>
+      <th class="col s6" data-field="id">ID</th>
+      <th class="col s2" data-field="prediction_result">Result</th>
+      <th class="col s2" data-field="score">Score</th>
+      <th class="col s2" data-field="TMD">TMD</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for query in query_data %}
+    <tr id="summary_{{ query.identifier }}">
+      <td class="id truncate col s6">
+        <a href="#detail_{{ query.identifier }}">
+          {{ query.identifier }}
+        </a>
+        </td>
+      <td class="result col s2">Loading...</td>
+      <td class="score col s2">Loading...</td>
+      <td class="tmd col s2">Loading...</td>
+    </tr>
+    {% end %}
+  </tbody>
+</table>
+
+<h4 id="result_list_title">Detailed results:</h4>
+<ul id="result_list" class="collection">
   {% for query in query_data %}
-    <li id="{{ query.identifier }}">
-      <div class="collapsible-header truncate">{{ query.identifier }}</div>
-      <div class="collapsible-body" style="margin-left: 20px">
+    <li id="detail_{{ query.identifier }}" class="collection-item">
+      <div class="query_id">{{ query.identifier }}</div>
+      <div class="query_detail" style="margin-left: 20px">
         Loading...
       </div>
       <div class="hide sequence">{{ query.sequence }}</div>

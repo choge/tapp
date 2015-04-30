@@ -27,10 +27,6 @@ function tableHead() {
 }
 
 $(function () {
-  // collapsible initialization
-  $('.collapsible').collapsible({
-    expandable : true // A setting that changes the collapsible behavior to expandable instead of the default accordion style
-  });
 
   // retreieve date before requesting result
   var date_before = new Date();
@@ -49,13 +45,24 @@ $(function () {
 
       // show each result
       $.each(data, function(id, result) {
-        var seq = $('#' + selectorEscape(id) + ' > .hide').text();
-        var $result = $('#' + selectorEscape(id) + ' > .collapsible-body');
+        var seq = $('#detail_' + selectorEscape(id) + ' > .hide').text();
+        var $summary = $('#summary_' + selectorEscape(id))
+        var $detail = $('#detail_' + selectorEscape(id) + ' > .query_detail');
         var score = result["score"];
         var has_tmd = result["has_tmd"];
         var is_ta = result["is_ta"];
-        var len = seq.length;
-        $result.html(
+
+        // update summary
+        if (is_ta) {
+          $summary.find('td.result').html('<i class="mdi-action-done small circle green lighten-4"></i>TA Protein');
+        } else {
+          $summary.find('td.result').html('<i class="mdi-content-clear small circle red lighten-4"></i>Not TA Protein');
+        }
+        $summary.find('td.score').html(score);
+        $summary.find('td.tmd').html(has_tmd);
+
+        // update detail
+        $detail.html(
             '<div class="row valign-wrapper">'
             + '<div class="col s2 offset-s1 valign">Likelihood</div>'
             + '<div class="col s9 valign">'
