@@ -52,26 +52,12 @@ class QueryAPIHandler(tornado.web.RequestHandler):
     def get(self, query_id):
         """returns calculate"""
         query_data = self.application.db[query_id]
-        myhmm = predictor.MyHmmPredictor(
-                filename=os.path.join(
-                    os.path.dirname(__file__), 'modelsFinal/ta4.xml'))
-        myhmm.set_decoder('TTHHHHHHHHHHHHHHHHHHHHHHHHHCCCCCGTT')
-        sphmm = predictor.MyHmmPredictor(
-                filename=os.path.join(
-                    os.path.dirname(__file__), 'modelsFinal/sp.xml'))
-        sphmm.set_decoder('SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSGGCCCCCHHHHHHHHHHHHHHHHHHHHHHHHH')
-        mphmm = predictor.MyHmmPredictor(
-                filename=os.path.join(
-                    os.path.dirname(__file__), 'modelsFinal/mp.xml'))
-        mphmm.set_decoder('SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSGLLLLLLLLLLLLLLLLLLLLCCCCCHHHHHHHHHHHHHHHHHHHHHHHHH')
         predicted = yield tornado.gen.Task(self.async_predict, 
-                myhmm, query_data, True)
-        predicted_sp = yield tornado.gen.Task(self.async_predict,
-                sphmm, query_data, False)
+                self.application.myhmm, query_data, True)
         predicted_mp = yield tornado.gen.Task(self.async_predict,
-                mphmm, query_data, False)
+                self.application.mphmm, query_data, False)
         
-        predicted = self.convert_numpy_types(predicted, predicted_sp, predicted_mp)
+        predicted = self.convert_numpy_types(predicted, predicted_mp)
         self.write(json.dumps(predicted))
 
     def async_predict(self, myhmm, dataset, reverse=True, callback=None):
@@ -80,7 +66,7 @@ class QueryAPIHandler(tornado.web.RequestHandler):
         make it asynchrounous would be better as for performance."""
         callback(myhmm.predict(dataset, reverse))
 
-    def convert_numpy_types(self, predicted, predicted_sp, predicted_mp):
+    def convert_numpy_types(self, predicted, predicted_mp):
         """As numpy types such as 'numpy.int64' cannot be converted into 
         JSON format, so make these values into native python values.
         
@@ -98,8 +84,10 @@ class QueryAPIHandler(tornado.web.RequestHandler):
             converted['omega'] = [i.item() for i in dic['omega']]
             converted['likelihood'] = dic['likelihood'].item()
             converted['path'] = dic['path']
-            converted['likelihood_sp'] = predicted_sp[seq_id]['likelihood'].item()
             converted['likelihood_mp'] = predicted_mp[seq_id]['likelihood'].item()
+            converted['score'] = (converted['likelihood_mp'] - converted['likelihood']) / len(dic['path'])
+            converted['has_tmd'] = 'HHHHHHHHHHHHHHH' in dic['path']
+            converted['is_ta'] = converted['score'] >= self.application.threshold
             new_result[seq_id] = converted
         return new_result
         
@@ -127,6 +115,16 @@ class Application(tornado.web.Application):
         current_file_path = os.path.dirname(__file__)
         template_path = os.path.join(current_file_path, 'templates')
         static_path = os.path.join(current_file_path, 'static')
+
+        self.threshold = -0.0084918561822501237
+        self.myhmm = predictor.MyHmmPredictor(
+                filename=os.path.join(
+                    os.path.dirname(__file__), 'modelsFinal/ta4.xml'))
+        self.myhmm.set_decoder('TTHHHHHHHHHHHHHHHHHHHHHHHHHCCCCCGTT')
+        self.mphmm = predictor.MyHmmPredictor(
+                filename=os.path.join(
+                    os.path.dirname(__file__), 'modelsFinal/mp.xml'))
+        self.mphmm.set_decoder('SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSGLLLLLLLLLLLLLLLLLLLLCCCCCHHHHHHHHHHHHHHHHHHHHHHHHH')
         tornado.web.Application.__init__(self, 
                 handlers, 
                 template_path=template_path,
@@ -134,8 +132,9 @@ class Application(tornado.web.Application):
                 debug=True)
 
     def __del__(self):
-        if self.db is not None:
-            self.db.close()
+        print('I will be deleted! Help!')
+        self.db.sync()
+        self.db.close()
 
 if __name__ == '__main__':
     tornado.options.parse_command_line()
