@@ -1,16 +1,28 @@
+-- create user and database from root
+-- psql -U postgres
+--
+-- postgres=# create user tapp with password '****'
+-- postgres=# create database tapp owner tapp
+--
+-- (after above commands)
+-- psql -U tapp -d tapp -f ddl.sql
+-- -> Done!
+
+-- cache for queries
 create table queries
-(   id char(8) constraint firstkey primary key,
-    mail_address varchar(256) not null,
+(   id varchar(512) constraint firstkey primary key,
+    seq text not null,
     created_date date not null);
 
 create index query_index
 on queries (id);
 
-create table query_details
-(   id char(8) not null,
-    detail_id char(8) not null,
-    seq text not null,
-    primary key (id, detail_id));
+-- cache for results
+create table results
+(   id varchar(512) primary key,
+    result JSON,
+    mail_address_hash varchar(512),
+    calculated timestamp);
 
-create index detail_id
-on query_details (id, detail_id);
+create index result_index
+on results (id);
