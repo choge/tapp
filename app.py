@@ -6,9 +6,11 @@ import tornado.gen
 import os
 import os.path
 import hashlib
-import shelve
+import psycopg2
+import momoko
 import json
 import numpy
+import logging
 
 from tornado.options import define, options
 
@@ -16,7 +18,17 @@ import predictor
 
 define('port', default=8080, help='run on the given port', type=int)
 
-class TopPageHandler(tornado.web.RequestHandler):
+class BaseHandler(tornado.web.RequestHandler):
+    """A Base class (for registering the db as property"""
+    @property
+    def db(self):
+        return self.application.db
+
+    @property
+    def dataset_maker(self):
+        return self.application.dataset_maker
+
+class TopPageHandler(BaseHandler):
     """TopPageHandler  """
 
     def get(self):
@@ -24,10 +36,12 @@ class TopPageHandler(tornado.web.RequestHandler):
                     page_title='TA Protein Predictor - top')
 
 
-class QueryHandler(tornado.web.RequestHandler):
+class QueryHandler(BaseHandler):
     """QueryHandler"""
 
-    @tornado.web.asynchronous
+    select_statement = "SELECT 1 FROM queries WHERE id = %s;"
+    insert_statement = "INSERT INTO queries (id, seq, created_date) values (%s, %s, current_date);"
+
     @tornado.gen.coroutine
     def post(self):
         """requires a set of fasta sequences, and returns the result
@@ -36,29 +50,91 @@ class QueryHandler(tornado.web.RequestHandler):
         TODO: return the blank page, and register the query to DB
         (possibly mongoDB or postgreSQL??)"""
         query = self.get_argument('query')
-        dataset_maker = predictor.FastaDataSetMaker()
-        query_data = dataset_maker.read_from_string(query)
+
+        # register the query
         identifier = hashlib.sha256(query.encode('utf-8')).hexdigest()
-        self.application.db[identifier] = query_data
-        
+        try:
+            cursor = yield momoko.Op(self.db.execute, 
+                                     self.select_statement, 
+                                     (identifier, ))
+            logging.info("try to retrieve the cached query: %s", self.select_statement % (identifier))
+            # if not registered, insert the data
+            if len(cursor.fetchall()) == 0:
+                cursor = yield momoko.Op(self.db.execute, 
+                                         self.insert_statement, 
+                                         (identifier, query,))
+                logging.info("register the query: %s", self.insert_statement % (identifier, '**',))
+        except (psycopg2.Warning, psycopg2.Error) as error:
+            self.write(str(error))
+        else:
+            logging.debug('inserted query data (id: %s)', identifier)
+
         self.redirect("result/{0}".format(identifier), permanent=True)
 
-class QueryAPIHandler(tornado.web.RequestHandler):
+
+class QueryAPIHandler(BaseHandler):
     """QueryAPIHandler  will return the result in JSON
     
     TODO: write"""
+    select_query = "SELECT id, seq FROM queries WHERE id = %s;"
+    select_result = "SELECT id, result FROM results where id = %s;"
+    insert_result = "INSERT INTO results (id, result, mail_address_hash, calculated) " \
+                    + "values (%s, null, null, null);"
+    update_result = "UPDATE results SET result = %s, calculated = current_date " \
+                    + "where id = %s;"
     
     @tornado.gen.coroutine
     def get(self, query_id):
         """returns calculate"""
-        query_data = self.application.db[query_id]
-        predicted = yield tornado.gen.Task(self.async_predict, 
-                self.application.myhmm, query_data, True)
-        predicted_mp = yield tornado.gen.Task(self.async_predict,
-                self.application.mphmm, query_data, False)
+        try:
+            # fetch the cached result
+            cursor = yield momoko.Op(self.db.execute,
+                                     self.select_result,
+                                     (query_id, ))
+            results = cursor.fetchall()
         
-        predicted = self.convert_numpy_types(predicted, predicted_mp)
-        self.write(json.dumps(predicted))
+            if len(results) > 0 and results[0][1] is not None:
+                logging.info('Found the cached result. %s' % (query_id,))
+                self.write(results[0][1])
+            else:
+
+                # retrieve query
+                cursor = yield momoko.Op(self.db.execute, 
+                                         self.select_query,
+                                         (query_id, ))
+                # TODO: write error codes (when there are no queries)
+                query = cursor.fetchall()[0][1]
+                logging.info('retrieve the query : %s', self.select_query % (query_id,))
+
+                # insert blank data
+                if len(results) == 0:
+                    yield momoko.Op(self.db.execute,
+                                    self.insert_result,
+                                    (query_id, ))
+                    logging.debug('inserted blank result data (id: %s)', query_id)
+
+                # create object and predict
+                query_data = self.dataset_maker.read_from_string(query)
+                # perform prediction
+                predicted = yield tornado.gen.Task(self.async_predict, 
+                        self.application.myhmm, query_data, True)
+                predicted_mp = yield tornado.gen.Task(self.async_predict,
+                        self.application.mphmm, query_data, False)
+                
+                predicted_json = json.dumps(self.convert_numpy_types(predicted, predicted_mp))
+                logging.info('calculation finished: %s', predicted_json[:100] + '...')
+
+                # after calculation has been finished, update the table
+                # XXX うまくいっていない
+                yield momoko.Op(self.db.execute,
+                                self.update_result,
+                                (predicted_json, query_id,))
+                logging.info('updated the result: %s', 
+                        self.update_result % (predicted_json[:100] + '...', query_id,))
+                self.write(predicted_json)
+        except (psycopg2.Warning, psycopg2.Error) as error:
+            self.write(str(error))
+
 
     def async_predict(self, myhmm, dataset, reverse=True, callback=None):
         """Async wrapper for predict.
@@ -85,19 +161,31 @@ class QueryAPIHandler(tornado.web.RequestHandler):
             converted['likelihood'] = dic['likelihood'].item()
             converted['path'] = dic['path']
             converted['likelihood_mp'] = predicted_mp[seq_id]['likelihood'].item()
-            converted['score'] = (converted['likelihood_mp'] - converted['likelihood']) / len(dic['path'])
+            converted['score'] = (converted['likelihood'] - converted['likelihood_mp']) / len(dic['path'])
             converted['has_tmd'] = 'HHHHHHHHHHHHHHH' in dic['path']
             converted['is_ta'] = converted['score'] >= self.application.threshold
             new_result[seq_id] = converted
         return new_result
-        
 
-class ResultPageHandler(tornado.web.RequestHandler):
+
+class ResultPageHandler(BaseHandler):
     """ResultPageHandler"""
+    statement = "SELECT id, seq FROM queries WHERE id = %s;"
 
+    @tornado.gen.coroutine
     def get(self, result_id):
         """show the result page, which is stored in DB."""
-        query_data = self.application.db[result_id]
+        try:
+            cursor = yield momoko.Op(self.db.execute, self.statement, (result_id, ))
+        except (psycopg2.Warning, psycopg2.Error) as error:
+            pass
+        else:
+            query = cursor.fetchall()[0][1]
+            logging.info('selected the statement')
+
+        # create query object and predict
+        query_data = self.dataset_maker.read_from_string(query)
+
         self.render('result.html', 
                     query_id=result_id, 
                     query_data=query_data,
@@ -110,8 +198,11 @@ class Application(tornado.web.Application):
                     (r'/predict', QueryHandler),
                     (r'/predict/([\w\-]+)', QueryAPIHandler),
                     (r'/result/([\w\-]+)', ResultPageHandler)]
-        self.db = shelve.open(os.path.join(
-            os.path.dirname(__file__), 'queries/db'))
+        self.db = momoko.Pool(dsn = 'dbname=tapp user=tapp password=tapp'
+                                    + ' host=localhost port=5432',
+                              size = 1)
+        self.dataset_maker = predictor.FastaDataSetMaker()
+
         current_file_path = os.path.dirname(__file__)
         template_path = os.path.join(current_file_path, 'templates')
         static_path = os.path.join(current_file_path, 'static')
@@ -119,11 +210,11 @@ class Application(tornado.web.Application):
         self.threshold = -0.0084918561822501237
         self.myhmm = predictor.MyHmmPredictor(
                 filename=os.path.join(
-                    os.path.dirname(__file__), 'modelsFinal/ta4.xml'))
+                    current_file_path, 'modelsFinal/ta4.xml'))
         self.myhmm.set_decoder('TTHHHHHHHHHHHHHHHHHHHHHHHHHCCCCCGTT')
         self.mphmm = predictor.MyHmmPredictor(
                 filename=os.path.join(
-                    os.path.dirname(__file__), 'modelsFinal/mp.xml'))
+                    current_file_path, 'modelsFinal/mp.xml'))
         self.mphmm.set_decoder('SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSGLLLLLLLLLLLLLLLLLLLLCCCCCHHHHHHHHHHHHHHHHHHHHHHHHH')
         tornado.web.Application.__init__(self, 
                 handlers, 
@@ -131,10 +222,6 @@ class Application(tornado.web.Application):
                 static_path=static_path,
                 debug=True)
 
-    def __del__(self):
-        print('I will be deleted! Help!')
-        self.db.sync()
-        self.db.close()
 
 if __name__ == '__main__':
     tornado.options.parse_command_line()
