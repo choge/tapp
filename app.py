@@ -211,7 +211,7 @@ class QueryAPIHandler(BaseHandler):
         TA Protein Predictor@bilab""".format(
             'http://' + self.application.HOSTNAME + '/result/' + query_id)
 
-        yield self.async_sendmail(msg)
+        yield tornado.gen.Task(self.async_sendmail, msg)
 
     def async_sendmail(self, msg, callback=None):
         callback(self.mail.sendmail,
@@ -257,7 +257,9 @@ class EmailSendHandler(BaseHandler):
         except (psycopg2.Warning, psycopg2.Error) as error:
             self.write(str(error))
         
-        yield self.send_registeration_mail(query_id, mail_address)
+        yield tornado.gen.Task(self.send_registeration_mail,
+                               query_id, 
+                               mail_address)
     
     @tornado.gen.coroutine
     def send_registeration_mail(self, query_id, mail_address):
@@ -281,7 +283,7 @@ class EmailSendHandler(BaseHandler):
         TA Protein Predictor@bilab""".format(
             'http://' + self.application.HOSTNAME + '/result/' + query_id)
 
-        yield self.async_sendmail(msg)
+        yield tornado.gen.Task(self.async_sendmail, msg)
 
     def async_sendmail(self, msg, callback=None):
         logging.info('sending email: %s', msg.as_string())
