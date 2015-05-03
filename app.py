@@ -5,7 +5,7 @@ import json
 import logging
 import numpy
 import smtplib
-import email
+import email.mime.multipart
 
 import tornado.httpserver
 import tornado.ioloop
@@ -150,8 +150,8 @@ class QueryAPIHandler(BaseHandler):
                         self.select_mail_address % (query_id, ))
                 mail_address = cursor_m.fetchall()
 
-                if len(mail_address) > 0:  # there are mail address registered
-                    logging.info('found the email address. Sending the mail that notifies completion of the prediction')
+                if len(mail_address) > 0 and mail_address[0][0] is not None:  # there are mail address registered
+                    logging.info('found the email address. Sending the mail that notifies completion of the prediction (to %s).', str(mail_address))
                     self.send_completion_mail(query_id, mail_address[0][0])
                 
                 self.write(predicted_json)
@@ -190,6 +190,7 @@ class QueryAPIHandler(BaseHandler):
             new_result[seq_id] = converted
         return new_result
 
+    @tornado.gen.coroutine
     def send_completion_mail(self, query_id, mail_address):
         """send an email that notifies the prediction has been completed."""
         msg = email.mime.multipart.MIMEMultipart()
@@ -210,8 +211,13 @@ class QueryAPIHandler(BaseHandler):
         TA Protein Predictor@bilab""".format(
             'http://' + self.application.HOSTNAME + '/result/' + query_id)
 
-        self.mail.sendmail(msg['from'], [msg['to']], msg.as_string())
+        yield self.async_sendmail(msg)
 
+    def async_sendmail(self, msg, callback=None):
+        callback(self.mail.sendmail,
+                 msg['from'], 
+                 [msg['to']], 
+                 msg.as_string())
 
 class ResultPageHandler(BaseHandler):
     """ResultPageHandler"""
@@ -223,7 +229,7 @@ class ResultPageHandler(BaseHandler):
         try:
             cursor = yield momoko.Op(self.db.execute, self.statement, (result_id, ))
         except (psycopg2.Warning, psycopg2.Error) as error:
-            pass
+            self.write(str(error))
         else:
             query = cursor.fetchall()[0][1]
             logging.info('selected the statement')
@@ -236,6 +242,54 @@ class ResultPageHandler(BaseHandler):
                     query_data=query_data,
                     page_title="TA Protein Predictor : prediction result")
 
+class EmailSendHandler(BaseHandler):
+    """EmailSendHandler"""
+    statement = "UPDATE results SET mail_address = %s where id = %s"
+
+    @tornado.gen.coroutine
+    def post(self, query_id):
+        mail_address = self.get_argument('mail')
+
+        try:
+            yield momoko.Op(self.db.execute, 
+                            self.statement,
+                            (mail_address, query_id,))
+        except (psycopg2.Warning, psycopg2.Error) as error:
+            self.write(str(error))
+        
+    
+    @tornado.gen.coroutine
+    def send_completion_mail(self, query_id, mail_address):
+        """send an email that notifies the prediction has been completed."""
+        msg = email.mime.multipart.MIMEMultipart()
+        msg['from'] = 'tapp@bi.a.u-tokyo.ac.jp'
+        msg['to'] = mail_address
+        msg['reply-to'] = 'choge@bi.a.u-tokyo.ac.jp'
+        msg['subject'] = 'TA Protein Prediction finished (ID:' + query_id + ')'
+        msg['body'] = """Dear user,
+
+        Thank you for using our TA Protein Predictor.
+
+        Your prediction at TA Protein Predictor has started.
+        We will notify you again after calculation.
+        Please visit the following URL to see the result.
+        {0}
+
+        Thanks,
+
+        TA Protein Predictor@bilab""".format(
+            'http://' + self.application.HOSTNAME + '/result/' + query_id)
+
+        yield self.async_sendmail(msg)
+
+    def async_sendmail(self, msg, callback=None):
+        callback(self.mail.sendmail,
+                 msg['from'], 
+                 [msg['to']], 
+                 msg.as_string())
+
+
+
 class Application(tornado.web.Application):
     """Web app"""
     HOSTNAME = 'tenuto.bi.a.u-tokyo.ac.jp'
@@ -244,7 +298,8 @@ class Application(tornado.web.Application):
         handlers = [(r'/', TopPageHandler),
                     (r'/predict', QueryHandler),
                     (r'/predict/([\w\-]+)', QueryAPIHandler),
-                    (r'/result/([\w\-]+)', ResultPageHandler)]
+                    (r'/result/([\w\-]+)', ResultPageHandler),
+                    (r'/mail/([\w\-]+)', EmailSendHandler)]
         self.db = momoko.Pool(dsn = 'dbname=tapp user=tapp password=tapp'
                                     + ' host=localhost port=5432',
                               size = 1)
