@@ -5,7 +5,7 @@ import json
 import logging
 import numpy
 import smtplib
-import email.mime.multipart
+import email.mime.text
 
 import tornado.httpserver
 import tornado.ioloop
@@ -193,12 +193,7 @@ class QueryAPIHandler(BaseHandler):
     @tornado.gen.coroutine
     def send_completion_mail(self, query_id, mail_address):
         """send an email that notifies the prediction has been completed."""
-        msg = email.mime.multipart.MIMEMultipart()
-        msg['from'] = 'tapp@bi.a.u-tokyo.ac.jp'
-        msg['to'] = mail_address
-        msg['reply-to'] = 'choge@bi.a.u-tokyo.ac.jp'
-        msg['subject'] = 'TA Protein Prediction finished (ID:' + query_id + ')'
-        msg['body'] = """Dear user,
+        body = """Dear user,
 
         Thank you for using our TA Protein Predictor.
 
@@ -210,6 +205,11 @@ class QueryAPIHandler(BaseHandler):
 
         TA Protein Predictor@bilab""".format(
             'http://' + self.application.HOSTNAME + '/result/' + query_id)
+        msg = email.mime.text.MIMEText(body)
+        msg['from'] = 'tapp@bi.a.u-tokyo.ac.jp'
+        msg['to'] = mail_address
+        msg['reply-to'] = 'choge@bi.a.u-tokyo.ac.jp'
+        msg['subject'] = 'TA Protein Prediction finished (ID:' + query_id + ')'
 
         yield tornado.gen.Task(self.async_sendmail, msg)
 
@@ -264,17 +264,11 @@ class EmailSendHandler(BaseHandler):
     @tornado.gen.coroutine
     def send_registeration_mail(self, query_id, mail_address):
         """send an email that notifies the prediction has been completed."""
-        msg = email.mime.multipart.MIMEMultipart()
-        msg['from'] = 'tapp@bi.a.u-tokyo.ac.jp'
-        msg['to'] = mail_address
-        msg['reply-to'] = 'choge@bi.a.u-tokyo.ac.jp'
-        msg['subject'] = 'TA Protein Prediction finished (ID:' + query_id + ')'
-        msg['body'] = """Dear user,
+        body = """Dear user,
 
         Thank you for using our TA Protein Predictor.
 
-        Your prediction at TA Protein Predictor has started.
-        We will notify you again after calculation.
+        Your prediction at TA Protein Predictor has been completed.
         Please visit the following URL to see the result.
         {0}
 
@@ -282,6 +276,11 @@ class EmailSendHandler(BaseHandler):
 
         TA Protein Predictor@bilab""".format(
             'http://' + self.application.HOSTNAME + '/result/' + query_id)
+        msg = email.mime.text.MIMEText(body)
+        msg['from'] = 'tapp@bi.a.u-tokyo.ac.jp'
+        msg['to'] = mail_address
+        msg['reply-to'] = 'choge@bi.a.u-tokyo.ac.jp'
+        msg['subject'] = 'TA Protein Prediction finished (ID:' + query_id + ')'
 
         yield tornado.gen.Task(self.async_sendmail, msg)
 
