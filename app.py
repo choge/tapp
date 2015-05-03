@@ -248,7 +248,7 @@ class EmailSendHandler(BaseHandler):
 
     @tornado.gen.coroutine
     def post(self, query_id):
-        mail_address = self.get_argument('mail')
+        mail_address = self.get_argument('email')
 
         try:
             yield momoko.Op(self.db.execute, 
