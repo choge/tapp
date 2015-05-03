@@ -1,22 +1,26 @@
+import os
+import os.path
+import hashlib
+import json
+import logging
+import numpy
+import smtplib
+import email
+
 import tornado.httpserver
 import tornado.ioloop
 import tornado.options
 import tornado.web
 import tornado.gen
-import os
-import os.path
-import hashlib
 import psycopg2
 import momoko
-import json
-import numpy
-import logging
-
-from tornado.options import define, options
 
 import predictor
 
-define('port', default=8080, help='run on the given port', type=int)
+tornado.options.define('port', 
+                       default=8080, 
+                       help='run on the given port', 
+                       type=int)
 
 class BaseHandler(tornado.web.RequestHandler):
     """A Base class (for registering the db as property"""
@@ -27,6 +31,10 @@ class BaseHandler(tornado.web.RequestHandler):
     @property
     def dataset_maker(self):
         return self.application.dataset_maker
+
+    @property
+    def mail(self):
+        return self.application.mail_connection
 
 class TopPageHandler(BaseHandler):
     """TopPageHandler  """
@@ -78,20 +86,23 @@ class QueryAPIHandler(BaseHandler):
     TODO: write"""
     select_query = "SELECT id, seq FROM queries WHERE id = %s;"
     select_result = "SELECT id, result FROM results where id = %s;"
-    insert_result = "INSERT INTO results (id, result, mail_address_hash, calculated) " \
+    insert_result = "INSERT INTO results (id, result, mail_address, calculated) " \
                     + "values (%s, null, null, null);"
     update_result = "UPDATE results SET result = %s, calculated = current_date " \
                     + "where id = %s;"
+    select_mail_address = "SELECT mail_address FROM results where id = %s"
     
     @tornado.gen.coroutine
     def get(self, query_id):
-        """returns calculate"""
+        """returns calculate
+        
+        TODO: use websockets if possible """
         try:
             # fetch the cached result
-            cursor = yield momoko.Op(self.db.execute,
+            cursor_r = yield momoko.Op(self.db.execute,
                                      self.select_result,
                                      (query_id, ))
-            results = cursor.fetchall()
+            results = cursor_r.fetchall()
         
             if len(results) > 0 and results[0][1] is not None:
                 logging.info('Found the cached result. %s' % (query_id,))
@@ -99,11 +110,11 @@ class QueryAPIHandler(BaseHandler):
             else:
 
                 # retrieve query
-                cursor = yield momoko.Op(self.db.execute, 
+                cursor_q = yield momoko.Op(self.db.execute, 
                                          self.select_query,
                                          (query_id, ))
                 # TODO: write error codes (when there are no queries)
-                query = cursor.fetchall()[0][1]
+                query = cursor_q.fetchall()[0][1]
                 logging.info('retrieve the query : %s', self.select_query % (query_id,))
 
                 # insert blank data
@@ -125,12 +136,24 @@ class QueryAPIHandler(BaseHandler):
                 logging.info('calculation finished: %s', predicted_json[:100] + '...')
 
                 # after calculation has been finished, update the table
-                # XXX うまくいっていない
                 yield momoko.Op(self.db.execute,
                                 self.update_result,
                                 (predicted_json, query_id,))
                 logging.info('updated the result: %s', 
                         self.update_result % (predicted_json[:100] + '...', query_id,))
+
+                # see if an e-mail address has been registered or not
+                cursor_m = yield momoko.Op(self.db.execute,
+                                           self.select_mail_address,
+                                           (query_id,))
+                logging.info('See if there are email address registered: %s',
+                        self.select_mail_address % (query_id, ))
+                mail_address = cursor_m.fetchall()
+
+                if len(mail_address) > 0:  # there are mail address registered
+                    logging.info('found the email address. Sending the mail that notifies completion of the prediction')
+                    self.send_completion_mail(query_id, mail_address[0][0])
+                
                 self.write(predicted_json)
         except (psycopg2.Warning, psycopg2.Error) as error:
             self.write(str(error))
@@ -167,6 +190,28 @@ class QueryAPIHandler(BaseHandler):
             new_result[seq_id] = converted
         return new_result
 
+    def send_completion_mail(self, query_id, mail_address):
+        """send an email that notifies the prediction has been completed."""
+        msg = email.mime.multipart.MIMEMultipart()
+        msg['from'] = 'tapp@bi.a.u-tokyo.ac.jp'
+        msg['to'] = mail_address
+        msg['reply-to'] = 'choge@bi.a.u-tokyo.ac.jp'
+        msg['subject'] = 'TA Protein Prediction finished (ID:' + query_id + ')'
+        msg['body'] = """Dear user,
+
+        Thank you for using our TA Protein Predictor.
+
+        Your prediction at TA Protein Predictor has been completed.
+        Please visit the following URL to see the result.
+        {0}
+
+        Thanks,
+
+        TA Protein Predictor@bilab""".format(
+            'http://' + self.application.HOSTNAME + '/result/' + query_id)
+
+        self.mail.sendmail(msg['from'], [msg['to']], msg.as_string())
+
 
 class ResultPageHandler(BaseHandler):
     """ResultPageHandler"""
@@ -193,6 +238,8 @@ class ResultPageHandler(BaseHandler):
 
 class Application(tornado.web.Application):
     """Web app"""
+    HOSTNAME = 'tenuto.bi.a.u-tokyo.ac.jp'
+
     def __init__(self):
         handlers = [(r'/', TopPageHandler),
                     (r'/predict', QueryHandler),
@@ -202,6 +249,7 @@ class Application(tornado.web.Application):
                                     + ' host=localhost port=5432',
                               size = 1)
         self.dataset_maker = predictor.FastaDataSetMaker()
+        self.mail_connection = smtplib.SMTP('localhost')
 
         current_file_path = os.path.dirname(__file__)
         template_path = os.path.join(current_file_path, 'templates')
@@ -226,5 +274,5 @@ class Application(tornado.web.Application):
 if __name__ == '__main__':
     tornado.options.parse_command_line()
     http_server = tornado.httpserver.HTTPServer(Application())
-    http_server.listen(options.port)
+    http_server.listen(tornado.options.options.port)
     tornado.ioloop.IOLoop.instance().start()
