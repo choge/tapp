@@ -257,7 +257,7 @@ class EmailSendHandler(BaseHandler):
         except (psycopg2.Warning, psycopg2.Error) as error:
             self.write(str(error))
         
-        self.send_registeration_mail(query_id, mail_address)
+        yield self.send_registeration_mail(query_id, mail_address)
     
     @tornado.gen.coroutine
     def send_registeration_mail(self, query_id, mail_address):
