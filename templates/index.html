@@ -1,5 +1,18 @@
 {% extends "base.html" %}
 
+{% block header %}
+<div id="title" class="navbar-fixed">
+  <nav>
+    <div class="nav-wrapper teal darken-4 white-text">
+      <a href="#" class="brand-logo">TA Protein Predictor</a>
+      <ul class="right hide-on-med-and-down">
+        <li><a href="/">Home</a></li>
+      </ul>
+    </div>
+  </nav>
+</div>
+{% end %}
+
 {% block main %}
 <form method="post" action="/predict">
   <p>Input your sequences in <a href="http://en.wikipedia.org/wiki/FASTA_format" target="_blank">FASTA format.</a></p>
