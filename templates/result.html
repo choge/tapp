@@ -31,18 +31,16 @@
     </div>
   </div>
   <div class="row valign-wrapper" id="email-address">
-    <form action='/mail/{{ query_id }}' method='post'>
-      <div class="input-field col s10 valign">
-        <i class="mdi-content-mail small prefix" id="input-icon-mail"></i>
-        <input id="email" type="email" class="validate" name="email">
-        <label for="input-icon-mail">Email</label>
-      </div>
-      <div class="col s2 valign">
-        <button class="btn waves-effect waves-light" type="submit" name="action" action="/mailsend">Submit
-          <i class="mdi-content-send"></i>
-        </button>
-      </div>
-    </form>
+    <div class="input-field col s10 valign">
+      <i class="mdi-content-mail small prefix" id="input-icon-mail"></i>
+      <input id="email" type="email" class="validate" name="email">
+      <label for="input-icon-mail">Email</label>
+    </div>
+    <div class="col s2 valign">
+      <button class="btn waves-effect waves-light" type="submit" name="action" id="mailsend">Submit
+        <i class="mdi-content-send"></i>
+      </button>
+    </div>
   </div>
   <div class="col s12" id="notification">
     It may take some time to finish calculation in case you have requested

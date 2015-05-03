@@ -30,6 +30,12 @@ $(function () {
   // setup the modal help
   $('.modal-trigger').leanModal();
 
+  // setup an email address
+  $('#mailsend').click(function() {
+    $.post('/mail/' + $('#query_id').text(),
+        {"email": $('#email').val()});
+  });
+
   // retreieve date before requesting result
   var date_before = new Date();
   // perform ajax to retrieve prediction result
