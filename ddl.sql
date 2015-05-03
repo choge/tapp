@@ -21,7 +21,7 @@ on queries (id);
 create table results
 (   id varchar(512) primary key,
     result JSON,
-    mail_address_hash varchar(512),
+    mail_address varchar(512),
     calculated timestamp);
 
 create index result_index
