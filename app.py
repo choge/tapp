@@ -283,6 +283,7 @@ class EmailSendHandler(BaseHandler):
         yield self.async_sendmail(msg)
 
     def async_sendmail(self, msg, callback=None):
+        logging.info('sending email: %s', msg.as_string())
         callback(self.mail.sendmail,
                  msg['from'], 
                  [msg['to']], 
