@@ -211,13 +211,8 @@ class QueryAPIHandler(BaseHandler):
         msg['reply-to'] = 'choge@bi.a.u-tokyo.ac.jp'
         msg['subject'] = 'TA Protein Prediction finished (ID:' + query_id + ')'
 
-        yield tornado.gen.Task(self.async_sendmail, msg)
+        self.mail.sendmail(msg['from'], [msg['to']], msg.as_string())
 
-    def async_sendmail(self, msg, callback=None):
-        callback(self.mail.sendmail,
-                 msg['from'], 
-                 [msg['to']], 
-                 msg.as_string())
 
 class ResultPageHandler(BaseHandler):
     """ResultPageHandler"""
@@ -257,11 +252,8 @@ class EmailSendHandler(BaseHandler):
         except (psycopg2.Warning, psycopg2.Error) as error:
             self.write(str(error))
         
-        yield tornado.gen.Task(self.send_registeration_mail,
-                               query_id, 
-                               mail_address)
+        self.send_registeration_mail(query_id, mail_address)
     
-    @tornado.gen.coroutine
     def send_registeration_mail(self, query_id, mail_address):
         """send an email that notifies the prediction has been completed."""
         body = """Dear user,
@@ -282,15 +274,7 @@ class EmailSendHandler(BaseHandler):
         msg['reply-to'] = 'choge@bi.a.u-tokyo.ac.jp'
         msg['subject'] = 'TA Protein Prediction finished (ID:' + query_id + ')'
 
-        yield tornado.gen.Task(self.async_sendmail, msg)
-
-    def async_sendmail(self, msg, callback=None):
-        logging.info('sending email: %s', msg.as_string())
-        callback(self.mail.sendmail,
-                 msg['from'], 
-                 [msg['to']], 
-                 msg.as_string())
-
+        self.mail.sendmail(msg['from'], [msg['to']], msg.as_string())
 
 
 class Application(tornado.web.Application):
