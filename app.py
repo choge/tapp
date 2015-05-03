@@ -257,9 +257,10 @@ class EmailSendHandler(BaseHandler):
         except (psycopg2.Warning, psycopg2.Error) as error:
             self.write(str(error))
         
+        self.send_registeration_mail(query_id, mail_address)
     
     @tornado.gen.coroutine
-    def send_completion_mail(self, query_id, mail_address):
+    def send_registeration_mail(self, query_id, mail_address):
         """send an email that notifies the prediction has been completed."""
         msg = email.mime.multipart.MIMEMultipart()
         msg['from'] = 'tapp@bi.a.u-tokyo.ac.jp'
