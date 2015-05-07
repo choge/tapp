@@ -77,7 +77,7 @@ class QueryHandler(BaseHandler):
         else:
             logging.debug('inserted query data (id: %s)', identifier)
 
-        self.redirect("result/{0}".format(identifier), permanent=True)
+        self.redirect("/tapp/result/{0}".format(identifier), permanent=True)
 
 
 class QueryAPIHandler(BaseHandler):
@@ -282,11 +282,11 @@ class Application(tornado.web.Application):
     HOSTNAME = 'tenuto.bi.a.u-tokyo.ac.jp'
 
     def __init__(self):
-        handlers = [(r'/', TopPageHandler),
-                    (r'/predict', QueryHandler),
-                    (r'/predict/([\w\-]+)', QueryAPIHandler),
-                    (r'/result/([\w\-]+)', ResultPageHandler),
-                    (r'/mail/([\w\-]+)', EmailSendHandler)]
+        handlers = [(r'/tapp/', TopPageHandler),
+                    (r'/tapp/predict', QueryHandler),
+                    (r'/tapp/predict/([\w\-]+)', QueryAPIHandler),
+                    (r'/tapp/result/([\w\-]+)', ResultPageHandler),
+                    (r'/tapp/mail/([\w\-]+)', EmailSendHandler)]
         self.db = momoko.Pool(dsn = 'dbname=tapp user=tapp password=tapp'
                                     + ' host=localhost port=5432',
                               size = 1)
@@ -310,6 +310,7 @@ class Application(tornado.web.Application):
                 handlers, 
                 template_path=template_path,
                 static_path=static_path,
+                static_url_prefix='/tapp/static/',
                 debug=True)
 
 
