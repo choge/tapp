@@ -32,14 +32,14 @@ $(function () {
 
   // setup an email address
   $('#mailsend').click(function() {
-    $.post('/tapp/mail/' + $('#query_id').text(),
+    $.post('../mail/' + $('#query_id').text(),
         {"email": $('#email').val()});
   });
 
   // retreieve date before requesting result
   var date_before = new Date();
   // perform ajax to retrieve prediction result
-  var url = '/tapp/predict/' + $('#query_id').text();
+  var url = '../predict/' + $('#query_id').text();
   var predicted = $.getJSON(url)
     .done(function(data){
       // retreieve another date

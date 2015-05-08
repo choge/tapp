@@ -77,7 +77,7 @@ class QueryHandler(BaseHandler):
         else:
             logging.debug('inserted query data (id: %s)', identifier)
 
-        self.redirect("/tapp/result/{0}".format(identifier), permanent=True)
+        self.redirect("./result/{0}".format(identifier), permanent=True)
 
 
 class QueryAPIHandler(BaseHandler):
