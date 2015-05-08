@@ -284,7 +284,7 @@ class EmailSendHandler(BaseHandler):
 
 class Application(tornado.web.Application):
     """Web app"""
-    HOSTNAME = 'tenuto.bi.a.u-tokyo.ac.jp'
+    HOSTNAME = 'tenuto.bi.a.u-tokyo.ac.jp/tapp'
 
     def __init__(self):
         handlers = [(r'/tapp/', TopPageHandler),
