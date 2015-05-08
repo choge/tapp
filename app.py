@@ -274,7 +274,12 @@ class EmailSendHandler(BaseHandler):
         msg['reply-to'] = 'choge@bi.a.u-tokyo.ac.jp'
         msg['subject'] = 'TA Protein Prediction finished (ID:' + query_id + ')'
 
-        self.mail.sendmail(msg['from'], [msg['to']], msg.as_string())
+        try:
+            self.mail.sendmail(msg['from'], [msg['to']], msg.as_string())
+        except smtplib.SMTPServerDisconnected as error:
+            logging.info('mail connection has been disconnected. Try to re-connect.')
+            self.application.mail_connectino = smtplib.SMTP('localhost')
+            self.mail.sendmail(msg['from'], [msg['to']], msg.as_string())
 
 
 class Application(tornado.web.Application):
