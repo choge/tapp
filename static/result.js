@@ -33,15 +33,16 @@ $(function () {
   // setup an email address
   $('#mailsend').click(function() {
     // check if there is a valid mail address
-    if (! $('#email').text().match(/[^@]+@[^@]+/)) {
+    if (! $('#email').text().match(/^[A-Za-z0-9]{1}[A-Za-z0-9_.-]*@{1}[A-Za-z0-9_.-]{1,}\.[A-Za-z0-9]{1,}$/)) {
       alert('Please enter a valid address');
+    } else {
+      // send mail
+      $.post('../mail/' + $('#query_id').text(),
+          {"email": $('#email').val()});
+      // disable the button
+      $('#mailsend').text('Mail sent');
+      $('#mailsend').addClass('disabled');
     }
-    // send mail
-    $.post('../mail/' + $('#query_id').text(),
-        {"email": $('#email').val()});
-    // disable the button
-    $('#mailsend').text('Mail sent');
-    $('#mailsend').addClass('disabled');
   });
 
   // retreieve date before requesting result
