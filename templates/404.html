@@ -1,0 +1,24 @@
+
+
+{% extends "base.html" %}
+
+{% block header %}
+<div id="title" class="navbar-fixed">
+  <nav>
+    <div class="nav-wrapper teal darken-4 white-text">
+      <a href="#" class="brand-logo">TA Protein Predictor - 404</a>
+      <ul class="right hide-on-med-and-down">
+        <li><a href="/">Home</a></li>
+      </ul>
+    </div>
+  </nav>
+</div>
+{% end %}
+
+{% block main %}
+<div class="flow-text">
+  The page you requested was not found.<br />
+  If you have requested the prediction, please <a href="../">go back</a> and
+  retry the prediction.
+</div>
+{% end %}
