@@ -33,7 +33,7 @@ $(function () {
   // setup an email address
   $('#mailsend').click(function() {
     // check if there is a valid mail address
-    if (! $('#email').value().match(/^[A-Za-z0-9]{1}[A-Za-z0-9_.-]*@{1}[A-Za-z0-9_.-]{1,}\.[A-Za-z0-9]{1,}$/)) {
+    if (! $('#email').val().match(/^[A-Za-z0-9]{1}[A-Za-z0-9_.-]*@{1}[A-Za-z0-9_.-]{1,}\.[A-Za-z0-9]{1,}$/)) {
       alert('Please enter a valid address');
     } else {
       // send mail
