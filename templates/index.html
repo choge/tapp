@@ -15,21 +15,22 @@
 
 {% block main %}
 <form method="post" action="./predict">
-  <p class="flow-text">
+  <p>
     TA Protein Predictor is a tool for prediction of Tail-anchored proteins,
     proteins with a single transmembrane domain and lacking signal peptides.
     This predictor and predicts the input sequences are TA proteins or not
     based on Hidden Markov model.
   </p>
-  <p class="flow-text">Input your sequences in <a href="http://en.wikipedia.org/wiki/FASTA_format" target="_blank">FASTA format.</a></p>
-  <textarea class="materialize-textarea" rows="5" cols="80" name="query"></textarea>
+  <p>Input your sequences in <a href="http://en.wikipedia.org/wiki/FASTA_format" target="_blank">FASTA format.</a></p>
+  <textarea class="materialize-textarea" rows="5" cols="80" id="query" name="query">
+  </textarea>
   <button class="btn waves-effect waves-light" type="submit" name="Predict">
     Predict
   </button>
 </form>
-<p class="flow-text">The predicted result will be shown in a new page.</p>
+<p>The predicted result will be shown in a new page.</p>
 {% end %}
 
 {% block custom_js %}
-<script type="text/javascript" src="{{ static_url('result.js') }}"></script>
+<script type="text/javascript" src="{{ static_url('index.js') }}"></script>
 {% end %}

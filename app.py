@@ -17,9 +17,9 @@ import momoko
 
 import predictor
 
-tornado.options.define('port', 
-                       default=8080, 
-                       help='run on the given port', 
+tornado.options.define('port',
+                       default=8080,
+                       help='run on the given port',
                        type=int)
 
 class BaseHandler(tornado.web.RequestHandler):
@@ -53,23 +53,21 @@ class QueryHandler(BaseHandler):
     @tornado.gen.coroutine
     def post(self):
         """requires a set of fasta sequences, and returns the result
-        
-        TODO: make myhmm a singleton?
-        TODO: return the blank page, and register the query to DB
-        (possibly mongoDB or postgreSQL??)"""
+
+        """
         query = self.get_argument('query')
 
         # register the query
         identifier = hashlib.sha256(query.encode('utf-8')).hexdigest()
         try:
-            cursor = yield momoko.Op(self.db.execute, 
-                                     self.select_statement, 
+            cursor = yield momoko.Op(self.db.execute,
+                                     self.select_statement,
                                      (identifier, ))
             logging.info("try to retrieve the cached query: %s", self.select_statement % (identifier))
             # if not registered, insert the data
             if len(cursor.fetchall()) == 0:
-                cursor = yield momoko.Op(self.db.execute, 
-                                         self.insert_statement, 
+                cursor = yield momoko.Op(self.db.execute,
+                                         self.insert_statement,
                                          (identifier, query,))
                 logging.info("register the query: %s", self.insert_statement % (identifier, '**',))
         except (psycopg2.Warning, psycopg2.Error) as error:
@@ -82,7 +80,7 @@ class QueryHandler(BaseHandler):
 
 class QueryAPIHandler(BaseHandler):
     """QueryAPIHandler  will return the result in JSON
-    
+
     TODO: write"""
     select_query = "SELECT id, seq FROM queries WHERE id = %s;"
     select_result = "SELECT id, result FROM results where id = %s;"
@@ -91,11 +89,11 @@ class QueryAPIHandler(BaseHandler):
     update_result = "UPDATE results SET result = %s, calculated = current_date " \
                     + "where id = %s;"
     select_mail_address = "SELECT mail_address FROM results where id = %s"
-    
+
     @tornado.gen.coroutine
     def get(self, query_id):
         """returns calculate
-        
+
         TODO: use websockets if possible """
         try:
             # fetch the cached result
@@ -103,14 +101,14 @@ class QueryAPIHandler(BaseHandler):
                                      self.select_result,
                                      (query_id, ))
             results = cursor_r.fetchall()
-        
+
             if len(results) > 0 and results[0][1] is not None:
                 logging.info('Found the cached result. %s' % (query_id,))
                 self.write(results[0][1])
             else:
 
                 # retrieve query
-                cursor_q = yield momoko.Op(self.db.execute, 
+                cursor_q = yield momoko.Op(self.db.execute,
                                          self.select_query,
                                          (query_id, ))
                 # TODO: write error codes (when there are no queries)
@@ -127,11 +125,11 @@ class QueryAPIHandler(BaseHandler):
                 # create object and predict
                 query_data = self.dataset_maker.read_from_string(query)
                 # perform prediction
-                predicted = yield tornado.gen.Task(self.async_predict, 
+                predicted = yield tornado.gen.Task(self.async_predict,
                         self.application.myhmm, query_data, True)
                 predicted_mp = yield tornado.gen.Task(self.async_predict,
                         self.application.mphmm, query_data, False)
-                
+
                 predicted_json = json.dumps(self.convert_numpy_types(predicted, predicted_mp))
                 logging.info('calculation finished: %s', predicted_json[:100] + '...')
 
@@ -139,7 +137,7 @@ class QueryAPIHandler(BaseHandler):
                 yield momoko.Op(self.db.execute,
                                 self.update_result,
                                 (predicted_json, query_id,))
-                logging.info('updated the result: %s', 
+                logging.info('updated the result: %s',
                         self.update_result % (predicted_json[:100] + '...', query_id,))
 
                 # see if an e-mail address has been registered or not
@@ -153,7 +151,7 @@ class QueryAPIHandler(BaseHandler):
                 if len(mail_address) > 0 and mail_address[0][0] is not None:  # there are mail address registered
                     logging.info('found the email address. Sending the mail that notifies completion of the prediction (to %s).', str(mail_address))
                     self.send_completion_mail(query_id, mail_address[0][0])
-                
+
                 self.write(predicted_json)
         except (psycopg2.Warning, psycopg2.Error) as error:
             self.write(str(error))
@@ -161,14 +159,14 @@ class QueryAPIHandler(BaseHandler):
 
     def async_predict(self, myhmm, dataset, reverse=True, callback=None):
         """Async wrapper for predict.
-        Though usually myhmm.predict() doesn't take much time, 
+        Though usually myhmm.predict() doesn't take much time,
         make it asynchrounous would be better as for performance."""
         callback(myhmm.predict(dataset, reverse))
 
     def convert_numpy_types(self, predicted, predicted_mp):
-        """As numpy types such as 'numpy.int64' cannot be converted into 
+        """As numpy types such as 'numpy.int64' cannot be converted into
         JSON format, so make these values into native python values.
-        
+
         @param predicted  is a dictionary of the predicted result.
         predicted
         +[seq_id]
@@ -232,8 +230,8 @@ class ResultPageHandler(BaseHandler):
         # create query object and predict
         query_data = self.dataset_maker.read_from_string(query)
 
-        self.render('result.html', 
-                    query_id=result_id, 
+        self.render('result.html',
+                    query_id=result_id,
                     query_data=query_data,
                     page_title="TA Protein Predictor : prediction result")
 
@@ -246,14 +244,14 @@ class EmailSendHandler(BaseHandler):
         mail_address = self.get_argument('email')
 
         try:
-            yield momoko.Op(self.db.execute, 
+            yield momoko.Op(self.db.execute,
                             self.statement,
                             (mail_address, query_id,))
         except (psycopg2.Warning, psycopg2.Error) as error:
             self.write(str(error))
-        
+
         self.send_registeration_mail(query_id, mail_address)
-    
+
     def send_registeration_mail(self, query_id, mail_address):
         """send an email that notifies the prediction has been completed."""
         body = """Dear user,
@@ -311,8 +309,8 @@ class Application(tornado.web.Application):
                 filename=os.path.join(
                     current_file_path, 'modelsFinal/mp.xml'))
         self.mphmm.set_decoder('SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSGLLLLLLLLLLLLLLLLLLLLCCCCCHHHHHHHHHHHHHHHHHHHHHHHHH')
-        tornado.web.Application.__init__(self, 
-                handlers, 
+        tornado.web.Application.__init__(self,
+                handlers,
                 template_path=template_path,
                 static_path=static_path,
                 static_url_prefix='/tapp/static/',
