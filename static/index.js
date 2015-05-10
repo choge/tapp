@@ -1,4 +1,13 @@
 
+function set_message(icon_class, message, is_error) {
+  // set some message to $el
+  $('#query_check_status').html(
+      '<i class="' + icon_class + ' small red-text text-darken-4"></i>' + message);
+  if (is_error) {
+    $('#predict_button').addClass('disabled');
+  }
+}
+
 $(function(){
   // check the query
   $('#query').change(function() {
@@ -6,26 +15,63 @@ $(function(){
     var current_query_header = ""
     var queries = {}
 
-    // read the sequence and convert them to an object
-    for (var i = 0; i < query_lines.length; i++) {
-      if (query_lines[i][0] === '>') {
-        current_query_header = query_lines[i];
-        queries[current_query_header] = { "header" : query_lines[i],
-                                          "query"  : "" };
-      } else {
-        if (! current_query_header in queries) {
-          // error
-          Materialize.toast('It seems your input does not contain the header line.', 
-            4000, '',
-            function () {
-              $('#query').addClass('teal lighten-4');
-            });
-        }
+  // too long sequence 
+  if (query_lines.length > 10000) {
+    set_message("mdi-action-report-problem",
+      "Your input is too long. Please divide them into smaller chunks if possible.",
+      true);
+  }
+
+  // read the sequence and convert them to an object
+  for (var i = 0; i < query_lines.length; i++) {
+    if (query_lines[i][0] === '>') {
+      current_query_header = query_lines[i];
+      queries[current_query_header] = { "header" : query_lines[i],
+        "query"  : "" };
+    } else if (query_lines[i] === '') {
+      continue;
+    } else {
+      if (current_query_header in queries) {
         queries[current_query_header]["query"] += query_lines[i];
+      } else {
+        // error
+        set_message("mdi-action-report-problem", 
+          "Your input seems lacking header line. Please input the sequence in FASTA format.",
+          true);
+        return;
       }
     }
+  }
 
+  // too many sequences
+  if (queries.length > 1000) {
+    set_message("mdi-action-report-problem",
+        "Too many input sequences (>1000). Please divide them.",
+        true);
+  }
+
+  for (var query_id in queries) {
     // check invalid characters
+    if (queries[query_id]['query'].match(/[^ACDEFGHIKLMNPQRSTVWY]+/)) {
+      // found invalid character
+      if (queries[query_id]['query'].match(/[^ABCDEFGHIJKLMNPQRSTVWXYZ\*\-]+/)) {
+        set_message("mdi-action-report-problem",
+            "Your input includes invalid character. Please check the input.",
+            true);
+        return;
+      } else {
+        // extended characters
+        set_message("mdi-action-done",
+            "Your input includes ambiguious codes or special codes (i.e. X or B). These codes are ignored for prediction.",
+            false);
+        return;
+      }
+    }
+  }
+
+  // input ok
+  $('#query_check_status').html('<i class="mdi-action-done teal-text text-lighten-3"></i>OK');
+  $('#predict_button').removeClass("disabled");
 
   });
 
