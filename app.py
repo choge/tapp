@@ -112,7 +112,7 @@ class PredictHandler(BaseHandler):
                 # so retruns the result if found.
                 logging.info('Found the cached result. %s' % (query_id,))
                 self.write(results[0][1])
-            elif len(results) > 0 and result[0][1] is None:
+            elif len(results) > 0 and results[0][1] is None:
                 # found the result, but it might be still under calculation.
                 logging.info('Found the result record, but still under calculation')
             else:
