@@ -6,6 +6,7 @@ import logging
 import numpy
 import smtplib
 import email.mime.text
+import concurrent
 
 import tornado.httpserver
 import tornado.ioloop
@@ -35,6 +36,10 @@ class BaseHandler(tornado.web.RequestHandler):
     @property
     def mail(self):
         return self.application.mail_connection
+
+    @property
+    def executor(self):
+        return self.application.executor
 
 class TopPageHandler(BaseHandler):
     """TopPageHandler  """
@@ -130,10 +135,15 @@ class PredictHandler(BaseHandler):
                 # create object and predict
                 query_data = self.dataset_maker.read_from_string(query)
                 # perform prediction
-                predicted = yield tornado.gen.Task(self.async_predict,
-                        self.application.myhmm, query_data, True)
-                predicted_mp = yield tornado.gen.Task(self.async_predict,
-                        self.application.mphmm, query_data, False)
+                logging.debug('start calculation')
+                predicted = yield self.executor.submit(
+                        self.application.myhmm.predict,
+                        query_data, True)
+                logging.debug('TA protein model prediction completed')
+                predicted_mp = yield self.executor.submit(
+                        self.application.mphmm.predict,
+                        query_data, False)
+                logging.debug('Multi-pass model prediction completed')
 
                 predicted_json = json.dumps(self.convert_numpy_types(predicted, predicted_mp))
                 logging.info('calculation finished: %s', predicted_json[:100] + '...')
@@ -290,17 +300,22 @@ class Application(tornado.web.Application):
     HOSTNAME = 'tenuto.bi.a.u-tokyo.ac.jp/tapp'
 
     def __init__(self):
+        # handlers bind paths and handlers
         handlers = [(r'/tapp/', TopPageHandler),
                     (r'/tapp/predict', QueryHandler),
                     (r'/tapp/predict/([\w\-]+)', PredictHandler),
                     (r'/tapp/result/([\w\-]+)', ResultPageHandler),
                     (r'/tapp/mail/([\w\-]+)', EmailSendHandler)]
+
+        # Postgresql, utils, mails
         self.db = momoko.Pool(dsn = 'dbname=tapp user=tapp password=tapp'
                                     + ' host=localhost port=5432',
                               size = 1)
         self.dataset_maker = predictor.FastaDataSetMaker()
         self.mail_connection = smtplib.SMTP('localhost')
+        self.executor = concurrent.futures.ThreadPoolExecutor(10)
 
+        # paths
         current_file_path = os.path.dirname(__file__)
         template_path = os.path.join(current_file_path, 'templates')
         static_path = os.path.join(current_file_path, 'static')
