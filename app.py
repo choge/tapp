@@ -78,7 +78,7 @@ class QueryHandler(BaseHandler):
         self.redirect("./result/{0}".format(identifier), permanent=True)
 
 
-class QueryAPIHandler(BaseHandler):
+class PredictHandler(BaseHandler):
     """QueryAPIHandler  will return the result in JSON
 
     TODO: write"""
@@ -103,8 +103,13 @@ class QueryAPIHandler(BaseHandler):
             results = cursor_r.fetchall()
 
             if len(results) > 0 and results[0][1] is not None:
+                # results[0][1] should be the predicted result,
+                # so retruns the result if found.
                 logging.info('Found the cached result. %s' % (query_id,))
                 self.write(results[0][1])
+            elif len(results) > 0 and result[0][1] is None:
+                # found the result, but it might be still under calculation.
+                logging.info('Found the result record, but still under calculation')
             else:
 
                 # retrieve query
@@ -258,8 +263,8 @@ class EmailSendHandler(BaseHandler):
 
         Thank you for using our TA Protein Predictor.
 
-        Your prediction at TA Protein Predictor has been completed.
-        Please visit the following URL to see the result.
+        Your prediction at TA Protein Predictor has been started.
+        Please visit the following URL to see the result after a while.
         {0}
 
         Thanks,
@@ -287,7 +292,7 @@ class Application(tornado.web.Application):
     def __init__(self):
         handlers = [(r'/tapp/', TopPageHandler),
                     (r'/tapp/predict', QueryHandler),
-                    (r'/tapp/predict/([\w\-]+)', QueryAPIHandler),
+                    (r'/tapp/predict/([\w\-]+)', PredictHandler),
                     (r'/tapp/result/([\w\-]+)', ResultPageHandler),
                     (r'/tapp/mail/([\w\-]+)', EmailSendHandler)]
         self.db = momoko.Pool(dsn = 'dbname=tapp user=tapp password=tapp'
@@ -300,6 +305,8 @@ class Application(tornado.web.Application):
         template_path = os.path.join(current_file_path, 'templates')
         static_path = os.path.join(current_file_path, 'static')
 
+        # Threshold which determines the prediction result
+        # whether the query is a TA protein or not.
         self.threshold = -0.0084918561822501237
         self.myhmm = predictor.MyHmmPredictor(
                 filename=os.path.join(
