@@ -51,6 +51,12 @@ $(function () {
   var url = '../predict/' + $('#query_id').text();
   var predicted = $.getJSON(url)
     .done(function(data){
+      // if data is null, return.
+      // maybe still under the calculation.
+      if (data === null) {
+          return;
+      }
+
       // retreieve another date
       var timediff = (new Date() - date_before) / 1000.0;
 
