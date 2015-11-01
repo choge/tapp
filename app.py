@@ -325,7 +325,7 @@ class Application(tornado.web.Application):
 
         # Threshold which determines the prediction result
         # whether the query is a TA protein or not.
-        self.threshold = -0.0084918561822501237
+        self.threshold = -0.016722298135034733
         self.myhmm = predictor.MyHmmPredictor(
                 filename=os.path.join(
                     current_file_path, 'modelsFinal/ta4.xml'))
