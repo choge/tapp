@@ -50,7 +50,12 @@ class TopPageHandler(BaseHandler):
 
 
 class QueryHandler(BaseHandler):
-    """QueryHandler"""
+    """QueryHandler  handles queries from the top page, and write them to DB.
+
+    Every query is stored in query table using hash-value of the string as
+    primary key for the table. This aims caching same queries to avoid 
+    heavy calculations.
+    """
 
     select_statement = "SELECT 1 FROM queries WHERE id = %s;"
     insert_statement = "INSERT INTO queries (id, seq, created_date) values (%s, %s, current_date);"
@@ -59,6 +64,9 @@ class QueryHandler(BaseHandler):
     def post(self):
         """requires a set of fasta sequences, and returns the result
 
+        @param  query (as a POST message). It should be ACII string, and formatted as FASTA.
+        @return  this handler redirects users to result page, where the results 
+                 will be shown in response to another request to PredictHandler.
         """
         query = self.get_argument('query')
 
@@ -84,9 +92,11 @@ class QueryHandler(BaseHandler):
 
 
 class PredictHandler(BaseHandler):
-    """QueryAPIHandler  will return the result in JSON
+    """PredictHandler  handles requests from the result page and returns the result of prediction.
 
-    TODO: write"""
+    The Javascript function in the result page calls this handler, and return the result
+    in JSON format.
+    TODO: Long polling or WebSockets should be used to avoid redundunt calculations."""
     select_query = "SELECT id, seq FROM queries WHERE id = %s;"
     select_result = "SELECT id, result FROM results where id = %s;"
     insert_result = "INSERT INTO results (id, result, mail_address, calculated) " \
@@ -97,9 +107,11 @@ class PredictHandler(BaseHandler):
 
     @tornado.gen.coroutine
     def get(self, query_id):
-        """returns calculate
+        """Handles GET request from the result page.
 
-        TODO: use websockets if possible """
+        @param query_id  as a GET parameter, which should be the hash-key for the query.
+        @returns  prediction result in JSON format.
+        """
         try:
             # fetch the cached result
             cursor_r = yield momoko.Op(self.db.execute,

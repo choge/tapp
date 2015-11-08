@@ -10,3 +10,6 @@ queries/db
 *.bak
 *.un~
 __pycache__/
+
+# pyenv files
+.python-version
