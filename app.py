@@ -136,7 +136,10 @@ class PredictHandler(BaseHandler):
                 cursor_q = yield momoko.Op(self.db.execute,
                                          self.select_query,
                                          (query_id, ))
-                # TODO: write error codes (when there are no queries)
+                queries = cursor_q.fetchall()
+                if len(queries) == 0 or len(queries[0]) == 0:
+                    logging.error("No query found.")
+                    # TODO: should forward to some cool error page.
                 query = cursor_q.fetchall()[0][1]
                 logging.info('retrieve the query : %s', self.select_query % (query_id,))
 
