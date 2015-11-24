@@ -9,6 +9,8 @@ queries/db
 *.~
 *.bak
 *.un~
+*.log
+*.out
 __pycache__/
 
 # pyenv files
