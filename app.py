@@ -316,6 +316,7 @@ class EmailSendHandler(BaseHandler):
 class Application(tornado.web.Application):
     """Web app"""
     HOSTNAME = 'tenuto.bi.a.u-tokyo.ac.jp/tapp'
+    callbacks = {}
 
     def __init__(self):
         # handlers bind paths and handlers
