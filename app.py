@@ -356,6 +356,14 @@ if __name__ == '__main__':
     tornado.options.parse_command_line()
     # retreive IOLoop object
     ioloop = tornado.ioloop.IOLoop.instance()
-    http_server = tornado.httpserver.HTTPServer(Application(ioloop))
+    app = Application(ioloop)
+
+    # for momoko
+    future = app.db.connect()
+    ioloop.add_future(future, lambda f: ioloop.stop())
+    ioloop.start()
+    future.result()
+
+    http_server = tornado.httpserver.HTTPServer(app)
     http_server.listen(tornado.options.options.port)
     ioloop.start()
