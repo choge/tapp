@@ -53,7 +53,7 @@ class QueryHandler(BaseHandler):
     """QueryHandler  handles queries from the top page, and write them to DB.
 
     Every query is stored in query table using hash-value of the string as
-    primary key for the table. This aims caching same queries to avoid 
+    primary key for the table. This aims caching same queries to avoid
     heavy calculations.
     """
 
@@ -65,7 +65,7 @@ class QueryHandler(BaseHandler):
         """requires a set of fasta sequences, and returns the result
 
         @param  query (as a POST message). It should be ACII string, and formatted as FASTA.
-        @return  this handler redirects users to result page, where the results 
+        @return  this handler redirects users to result page, where the results
                  will be shown in response to another request to PredictHandler.
         """
         query = self.get_argument('query')
@@ -73,14 +73,12 @@ class QueryHandler(BaseHandler):
         # register the query
         identifier = hashlib.sha256(query.encode('utf-8')).hexdigest()
         try:
-            cursor = yield momoko.Op(self.db.execute,
-                                     self.select_statement,
-                                     (identifier, ))
+            cursor = yield self.db.execute(self.select_statement,
+                                            (identifier, ))
             logging.info("try to retrieve the cached query: %s", self.select_statement % (identifier))
             # if not registered, insert the data
             if len(cursor.fetchall()) == 0:
-                cursor = yield momoko.Op(self.db.execute,
-                                         self.insert_statement,
+                cursor = yield self.db.execute(self.insert_statement,
                                          (identifier, query,))
                 logging.info("register the query: %s", self.insert_statement % (identifier, '**',))
         except (psycopg2.Warning, psycopg2.Error) as error:
@@ -114,8 +112,7 @@ class PredictHandler(BaseHandler):
         """
         try:
             # fetch the cached result
-            cursor_r = yield momoko.Op(self.db.execute,
-                                     self.select_result,
+            cursor_r = yield self.db.execute(self.select_result,
                                      (query_id, ))
             results = cursor_r.fetchall()
 
@@ -124,7 +121,7 @@ class PredictHandler(BaseHandler):
                 # so retruns the result if found.
                 logging.info('Found the cached result. %s' % (query_id,))
                 self.write(results[0][1])
-                # 
+                #
                 # codes below possibly make the result never back
                 # (in case previous prediction request hangs or terminated)
                 #elif len(results) > 0 and results[0][1] is None:
@@ -133,8 +130,7 @@ class PredictHandler(BaseHandler):
             else:
 
                 # retrieve query
-                cursor_q = yield momoko.Op(self.db.execute,
-                                         self.select_query,
+                cursor_q = yield self.db.execute(self.select_query,
                                          (query_id, ))
                 queries = cursor_q.fetchall()
                 if len(queries) == 0 or len(queries[0]) == 0:
@@ -145,8 +141,7 @@ class PredictHandler(BaseHandler):
 
                 # insert blank data
                 if len(results) == 0:
-                    yield momoko.Op(self.db.execute,
-                                    self.insert_result,
+                    yield self.db.execute(self.insert_result,
                                     (query_id, ))
                     logging.debug('inserted blank result data (id: %s)', query_id)
 
@@ -167,15 +162,13 @@ class PredictHandler(BaseHandler):
                 logging.info('calculation finished: %s', predicted_json[:100] + '...')
 
                 # after calculation has been finished, update the table
-                yield momoko.Op(self.db.execute,
-                                self.update_result,
+                yield self.db.execute(self.update_result,
                                 (predicted_json, query_id,))
                 logging.info('updated the result: %s',
                         self.update_result % (predicted_json[:100] + '...', query_id,))
 
                 # see if an e-mail address has been registered or not
-                cursor_m = yield momoko.Op(self.db.execute,
-                                           self.select_mail_address,
+                cursor_m = yield self.db.execute(self.select_mail_address,
                                            (query_id,))
                 logging.info('See if there are email address registered: %s',
                         self.select_mail_address % (query_id, ))
@@ -253,7 +246,7 @@ class ResultPageHandler(BaseHandler):
     def get(self, result_id):
         """show the result page, which is stored in DB."""
         try:
-            cursor = yield momoko.Op(self.db.execute, self.statement, (result_id, ))
+            cursor = yield self.db.execute(self.statement, (result_id, ))
         except (psycopg2.Warning, psycopg2.Error) as error:
             self.write(str(error))
         else:
@@ -277,8 +270,7 @@ class EmailSendHandler(BaseHandler):
         mail_address = self.get_argument('email')
 
         try:
-            yield momoko.Op(self.db.execute,
-                            self.statement,
+            yield self.db.execute(self.statement,
                             (mail_address, query_id,))
         except (psycopg2.Warning, psycopg2.Error) as error:
             self.write(str(error))
@@ -318,7 +310,7 @@ class Application(tornado.web.Application):
     HOSTNAME = 'tenuto.bi.a.u-tokyo.ac.jp/tapp'
     callbacks = {}
 
-    def __init__(self):
+    def __init__(self, ioloop):
         # handlers bind paths and handlers
         handlers = [(r'/tapp/', TopPageHandler),
                     (r'/tapp/predict', QueryHandler),
@@ -329,7 +321,9 @@ class Application(tornado.web.Application):
         # Postgresql, utils, mails
         self.db = momoko.Pool(dsn = 'dbname=tapp user=tapp password=tapp'
                                     + ' host=localhost port=5432',
-                              size = 1)
+                              size = 1,
+                              ioloop = ioloop)
+
         self.dataset_maker = predictor.FastaDataSetMaker()
         self.mail_connection = smtplib.SMTP('localhost')
         self.executor = concurrent.futures.ThreadPoolExecutor(10)
@@ -360,6 +354,8 @@ class Application(tornado.web.Application):
 
 if __name__ == '__main__':
     tornado.options.parse_command_line()
-    http_server = tornado.httpserver.HTTPServer(Application())
+    # retreive IOLoop object
+    ioloop = tornado.ioloop.IOLoop.instance()
+    http_server = tornado.httpserver.HTTPServer(Application(ioloop))
     http_server.listen(tornado.options.options.port)
-    tornado.ioloop.IOLoop.instance().start()
+    ioloop.start()
