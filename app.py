@@ -136,7 +136,7 @@ class PredictHandler(BaseHandler):
                 if len(queries) == 0 or len(queries[0]) == 0:
                     logging.error("No query found.")
                     # TODO: should forward to some cool error page.
-                query = cursor_q.fetchall()[0][1]
+                query = queries[0][1]
                 logging.info('retrieve the query : %s', self.select_query % (query_id,))
 
                 # insert blank data
@@ -151,7 +151,7 @@ class PredictHandler(BaseHandler):
                 logging.debug('start calculation')
                 predicted = yield self.executor.submit(
                         self.application.myhmm.predict,
-                        query_data, True)
+                        query_data, True)  # The 3rd boolean is whether the query is inverted or not
                 logging.debug('TA protein model prediction completed')
                 predicted_mp = yield self.executor.submit(
                         self.application.mphmm.predict,
