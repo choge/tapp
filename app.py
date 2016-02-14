@@ -298,6 +298,19 @@ class EmailSendHandler(BaseHandler):
             self.mail.sendmail(msg['from'], [msg['to']], msg.as_string())
 
 
+class DataDownloadHandler(BaseHandler):
+    """Download a file"""
+    
+    def get(self, filename):
+        """Download the data file"""
+        with open('static/datasets/' + filename) as f:
+            self.set_header('Content-Type', 'text/plain')
+            self.set_header('Content-Disposition', 
+                            'attachment; filename=' + filename + '')
+            self.write(f.read())
+        
+
+
 class Application(tornado.web.Application):
     """Web app"""
     HOSTNAME = 'tenuto.bi.a.u-tokyo.ac.jp/tapp'
@@ -308,7 +321,8 @@ class Application(tornado.web.Application):
                     (r'/tapp/predict', QueryHandler),
                     (r'/tapp/predict/([\w\-]+)', PredictHandler),
                     (r'/tapp/result/([\w\-]+)', ResultPageHandler),
-                    (r'/tapp/mail/([\w\-]+)', EmailSendHandler)]
+                    (r'/tapp/mail/([\w\-]+)', EmailSendHandler),
+                    (r'/tapp/data/(\w+\.fasta)', DataDownloadHandler)]
 
         # Postgresql, utils, mails
         self.db = momoko.Pool(dsn = 'dbname=tapp user=tapp password=tapp'
