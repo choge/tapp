@@ -2,6 +2,7 @@ import os
 import os.path
 import hashlib
 import json
+import re
 import logging
 import numpy
 import smtplib
@@ -102,6 +103,7 @@ class PredictHandler(BaseHandler):
     update_result = "UPDATE results SET result = %s, calculated = current_date " \
                     + "where id = %s;"
     select_mail_address = "SELECT mail_address FROM results where id = %s"
+    tmd_re = re.compile(r'H+')
 
     @tornado.gen.coroutine
     def get(self, query_id):
@@ -120,13 +122,7 @@ class PredictHandler(BaseHandler):
                 # results[0][1] should be the predicted result,
                 # so retruns the result if found.
                 logging.info('Found the cached result. %s' % (query_id,))
-                self.write(results[0][1])
-                #
-                # codes below possibly make the result never back
-                # (in case previous prediction request hangs or terminated)
-                #elif len(results) > 0 and results[0][1] is None:
-                # found the result, but it might be still under calculation.
-                #logging.info('Found the result record, but still under calculation')
+                self.write(json.dumps(results[0][1]))
             else:
 
                 # retrieve query
@@ -158,7 +154,7 @@ class PredictHandler(BaseHandler):
                         query_data, False)
                 logging.debug('Multi-pass model prediction completed')
 
-                predicted_json = json.dumps(self.convert_numpy_types(predicted, predicted_mp))
+                predicted_json = json.dumps(self.convert_result_data(predicted, predicted_mp))
                 logging.info('calculation finished: %s', predicted_json[:100] + '...')
 
                 # after calculation has been finished, update the table
@@ -189,9 +185,11 @@ class PredictHandler(BaseHandler):
         make it asynchrounous would be better as for performance."""
         callback(myhmm.predict(dataset, reverse))
 
-    def convert_numpy_types(self, predicted, predicted_mp):
-        """As numpy types such as 'numpy.int64' cannot be converted into
+    def convert_result_data(self, predicted, predicted_mp):
+        """As numpy types (such as 'numpy.int64') cannot be converted into
         JSON format, so make these values into native python values.
+        And to render results by Transparency, they should be a list,
+        not a dictionary (or object). So convert them to a list.
 
         @param predicted  is a dictionary of the predicted result.
         predicted
@@ -199,19 +197,40 @@ class PredictHandler(BaseHandler):
          +['path'] : str, decoded path
          +['pathnum'] : list of numpy.int64
          +['likelihood'] : numpy.float64
-         +['omega'] : list of numpy.float64. """
-        new_result = {}
+         +['omega'] : list of numpy.float64. 
+
+        new_result
+        [ {'seq_id': 'XXXXX',
+           'pathnum': [1, 2, 3, ... ],
+           'omega':   [0.123, 0.234, ...],
+           'likelihood': 0.123456,
+           'path': 'GGGGGGGGGGGG....',
+           'likelihood_mp': -0.123456,
+           'tmd_start': 234,
+           'tmd_end':   250,
+           'is_ta': True}, ...]"""
+        new_result = []
         for seq_id, dic in predicted.items():
             converted = {}
+            converted['seq_id'] = seq_id
             converted['pathnum'] = [i.item() for i in dic['pathnum']]
             converted['omega'] = [i.item() for i in dic['omega']]
             converted['likelihood'] = dic['likelihood'].item()
             converted['path'] = dic['path']
             converted['likelihood_mp'] = predicted_mp[seq_id]['likelihood'].item()
-            converted['score'] = (converted['likelihood'] - converted['likelihood_mp']) / len(dic['path'])
-            converted['has_tmd'] = 'HHHHHHHHHHHHHHH' in dic['path']
+            # round the score to 5 digits
+            tmp_score = (converted['likelihood'] - converted['likelihood_mp']) / len(dic['path'])
+            converted['score'] = round(tmp_score, 5)
+            # calculate tmd start and end
+            m = self.tmd_re.search(dic['path'])
+            if m is None:
+                tmd_start, tmd_end = -1, -1
+            else:
+                tmd_start, tmd_end = m.start(), m.end()
+            converted['tmd_start'] = tmd_start
+            converted['tmd_end']   = tmd_end
             converted['is_ta'] = converted['score'] >= self.application.threshold
-            new_result[seq_id] = converted
+            new_result.append(converted)
         return new_result
 
     @tornado.gen.coroutine
