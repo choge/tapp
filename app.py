@@ -154,7 +154,7 @@ class PredictHandler(BaseHandler):
                         query_data, False)
                 logging.debug('Multi-pass model prediction completed')
 
-                predicted_json = json.dumps(self.convert_result_data(predicted, predicted_mp))
+                predicted_json = json.dumps(self.convert_result_data(predicted, predicted_mp, query_data))
                 logging.info('calculation finished: %s', predicted_json[:100] + '...')
 
                 # after calculation has been finished, update the table
@@ -185,7 +185,7 @@ class PredictHandler(BaseHandler):
         make it asynchrounous would be better as for performance."""
         callback(myhmm.predict(dataset, reverse))
 
-    def convert_result_data(self, predicted, predicted_mp):
+    def convert_result_data(self, predicted, predicted_mp, query_data):
         """As numpy types (such as 'numpy.int64') cannot be converted into
         JSON format, so make these values into native python values.
         And to render results by Transparency, they should be a list,
@@ -208,7 +208,9 @@ class PredictHandler(BaseHandler):
            'likelihood_mp': -0.123456,
            'tmd_start': 234,
            'tmd_end':   250,
-           'is_ta': True}, ...]"""
+           'is_ta': True,
+           'seq': 'ACDEDDDFFDDD....'
+           }, ...]"""
         new_result = []
         for seq_id, dic in predicted.items():
             converted = {}
@@ -230,6 +232,9 @@ class PredictHandler(BaseHandler):
             converted['tmd_start'] = tmd_start
             converted['tmd_end']   = tmd_end
             converted['is_ta'] = converted['score'] >= self.application.threshold
+            # the original amino acid sequence
+            converted['seq'] = query_data[seq_id].sequence
+            print(converted['seq'])
             new_result.append(converted)
         return new_result
 

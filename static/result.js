@@ -11,9 +11,9 @@ function formatSequences(original, decoded) {
   splitted_decoded  = decoded.match(/.{1,60}/g);
   formatted = "";
   for (var i = 0; i < splitted_original.length; i++) {
-    formatted += "SEQUENCE:" + splitted_original[i] + "<br>";
-    formatted += "&nbsp;DECODED:" + splitted_decoded[i] + "<br>";
-    formatted += "<br>";
+    formatted += "SEQUENCE: " + splitted_original[i] + "\n";
+    formatted += " DECODED: " + splitted_decoded[i] + "\n";
+    formatted += "\n";
   }
   return formatted;
 }
@@ -69,8 +69,13 @@ $(function () {
       text: function(params) {
         return Math.round(this.likelihood * Math.pow(10, 5)) / Math.pow(10, 5);
       },
-    }
-  }
+    },
+    path: {
+      text: function(params) {
+        return formatSequences(this.seq, this.path);
+      },
+    },
+  };
 
 
   // retreieve date before requesting result
@@ -95,6 +100,7 @@ $(function () {
           + '| took ' + timediff + ' secs');
 
       // render the data using Transparency template engine
-      $('#result_summary').render(data, directives_summary);
+      $('#result_summary_list').render(data, directives_summary);
+      $('#result_detail_list').render(data, directives_detail);
     });
 });

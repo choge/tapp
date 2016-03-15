@@ -69,9 +69,9 @@
           <i class="mdi-action-help teal-text text-lighten-3"></i></a></th>
     </tr>
   </thead>
-  <tbody>
+  <tbody id="result_summary_list">
     <!-- template used by Transparency : start -->
-    <tr data-bind="result_summary">
+    <tr data-bind="result">
       <td class="col s12 m8 l6" data-bind="seq_id"></td>
       <td class="col s6 m4 l2"  data-bind="is_ta"></td>
       <td class="col s6 m6 l2"  data-bind="score"></td>
@@ -88,7 +88,7 @@
 <h4 id="result_list_title">Detailed results:</h4>
 <ul id="result_detail_list" class="collection">
   <!-- templated used by Transparency : start -->
-  <li class="collection-item row" data-bind="result_detail">
+  <li class="collection-item row" data-bind="result">
     <div class="col s12 m12 l12" data-bind="seq_id"></div>
     <div class="col s6  m4  l2"  data-bind="is_ta"></div>
     <div class="col s6  m6  l2"  data-bind="score"></div>
@@ -97,7 +97,9 @@
       -
       <span data-bind="tmd_end"></span>
     </div>
-    <pre data-bind="path"></pre>
+    <div class="col s12 m12 l12">
+      <pre data-bind="path"></pre>
+    </div>
   </li>
   <!-- template used by Transparency : end -->
 </ul>
