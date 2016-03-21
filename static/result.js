@@ -50,10 +50,13 @@ $(function () {
         }
         return first_20digits;
       },
+      href: function(params) {
+        return '#Detail_' + this.seq_id;
+      },
     },
     score: {
       text: function(params) {
-        return Math.round(this.likelihood * Math.pow(10, 5)) / Math.pow(10, 5);
+        return Math.round(this.score * Math.pow(10, 5)) / Math.pow(10, 5);
       },
     }
   };
@@ -64,10 +67,13 @@ $(function () {
       id: function(params) {
         return 'Detail_' + this.seq_id;
       },
+      text: function(params) {
+        return 'ID: ' + this.seq_id;
+      }
     },
     score: {
       text: function(params) {
-        return Math.round(this.likelihood * Math.pow(10, 5)) / Math.pow(10, 5);
+        return 'Score: ' + Math.round(this.score * Math.pow(10, 5)) / Math.pow(10, 5);
       },
     },
     path: {
@@ -75,6 +81,11 @@ $(function () {
         return formatSequences(this.seq, this.path);
       },
     },
+    is_ta: {
+      text: function(params) {
+        return 'Result: ' + this.is_ta;
+      },
+    }
   };
 
 
