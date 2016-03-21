@@ -325,7 +325,8 @@ class EmailSendHandler(BaseHandler):
             self.mail.sendmail(msg['from'], [msg['to']], msg.as_string())
         except smtplib.SMTPServerDisconnected as error:
             logging.info('mail connection has been disconnected. Try to re-connect.')
-            self.application.mail_connectino = smtplib.SMTP('localhost')
+            self.application.mail_connection = smtplib.SMTP('localhost')
+            self.application.mail_connection.connect()
             self.mail.sendmail(msg['from'], [msg['to']], msg.as_string())
 
 
@@ -350,6 +351,7 @@ class Application(tornado.web.Application):
 
         self.dataset_maker = predictor.FastaDataSetMaker()
         self.mail_connection = smtplib.SMTP('localhost')
+        self.mail_connection.connect()
         self.executor = concurrent.futures.ThreadPoolExecutor(10)
 
         # paths
