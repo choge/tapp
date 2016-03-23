@@ -87,7 +87,7 @@ class QueryHandler(BaseHandler):
         else:
             logging.debug('inserted query data (id: %s)', identifier)
 
-        self.redirect("./result/{0}".format(identifier), permanent=True)
+        self.redirect("./result/{0}".format(identifier), status=303)
 
 
 class PredictHandler(BaseHandler):
