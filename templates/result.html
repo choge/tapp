@@ -69,33 +69,40 @@
           <i class="mdi-action-help teal-text text-lighten-3"></i></a></th>
     </tr>
   </thead>
-  <tbody>
-    {% for query in query_data %}
-    <tr id="summary_{{ query.identifier }}">
-      <td class="id truncate col s6">
-        <a href="#detail_{{ query.identifier }}">
-          {{ query.identifier }}
-        </a>
-        </td>
-      <td class="result col s2">Loading...</td>
-      <td class="score col s2">Loading...</td>
-      <td class="tmd col s2">Loading...</td>
+  <tbody id="result_summary_list">
+    <!-- template used by Transparency : start -->
+    <tr data-bind="result">
+      <td class="col s12 m8 l6"><a data-bind="seq_id"></a></td>
+      <td class="col s6 m4 l2"  data-bind="is_ta"></td>
+      <td class="col s6 m6 l2"  data-bind="score"></td>
+      <td class="col s12 m6  l2">
+        <span data-bind="tmd_start"></span>
+        -
+        <span data-bind="tmd_end"></span>
+      </td>
     </tr>
-    {% end %}
+    <!-- template used by Transparency : end -->
   </tbody>
 </table>
 
 <h4 id="result_list_title">Detailed results:</h4>
-<ul id="result_list" class="collection">
-  {% for query in query_data %}
-    <li id="detail_{{ query.identifier }}" class="collection-item">
-      <div class="query_id">{{ query.identifier }}</div>
-      <div class="query_detail" style="margin-left: 20px">
-        Loading...
-      </div>
-      <div class="hide sequence">{{ query.sequence }}</div>
-    </li>
-  {% end %}
+<ul id="result_detail_list" class="collection">
+  <!-- templated used by Transparency : start -->
+  <li class="collection-item row" data-bind="result">
+    <div class="col s12 m12 l12" data-bind="seq_id"></div>
+    <div class="col s6  m4  l2"  data-bind="is_ta"></div>
+    <div class="col s6  m6  l2"  data-bind="score"></div>
+    <div class="col s12 m6  l2">
+      TMD: 
+      <span data-bind="tmd_start"></span>
+      -
+      <span data-bind="tmd_end"></span>
+    </div>
+    <div class="col s12 m12 l12">
+      <pre data-bind="path"></pre>
+    </div>
+  </li>
+  <!-- template used by Transparency : end -->
 </ul>
 
 
@@ -145,3 +152,57 @@
 {% block custom_js %}
 <script type="text/javascript" src="{{ static_url('result.js') }}"></script>
 {% end %}
+
+<!--
+Transparency:::
+Javascript
+var items;
+
+items = [
+  { 
+    name: "first name",
+    score: -0.12345678,
+  },
+  { 
+    name: "second name",
+    score: 0.246802,
+  },
+];
+
+var directives;
+
+directives = {
+  something: {
+    id: function(params) { return this.name; },
+    text: function(params) { return this.score; },
+    }
+    # Beyond just mapping, use directives.
+    # If I want to restrict digits in html, I can use directives.
+};
+
+$('.container').render(items, directives);
+
+HTML
+<div class="container">
+  <div class="item">
+    <div class="name"></div>
+    <div class="something"></div>
+  </div>
+</div>
+
+<table>
+  <tbody class="container">
+    <tr class="item">
+      <td class="name"></td>
+      <td class="something"></td>
+    </tr>
+  </tbody>
+</table>
+
+TODO: Change JSON return from predict method
+-> DONE: object -> list of objects
+TODO: Change class or ID of HTML elements that can used with Transparency
+-> ALMOST DONE: Maybe a new data-bind id and its directive is needed
+                to render the decoded path nicely.
+TODO: Write directives
+-->
