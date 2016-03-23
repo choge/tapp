@@ -18,7 +18,8 @@ $(function(){
   // too long sequence 
   if (query_lines.length > 10000) {
     set_message("mdi-action-report-problem",
-      "Your input is too long. Please divide them into smaller chunks if possible.",
+      "Your input is too long. Please divide them into smaller chunks if possible.\n"
+      + "Or you can use command line tool.",
       true);
   }
 
@@ -44,10 +45,12 @@ $(function(){
   }
 
   // too many sequences
-  if (queries.length > 1000) {
+  if (Object.keys(queries).length > 50) {
     set_message("mdi-action-report-problem",
-        "Too many input sequences (>1000). Please divide them.",
+        "Too many input sequences (>50). "
+        + "Please divide them or use client tool instead.",
         true);
+    return;
   }
 
   for (var query_id in queries) {
