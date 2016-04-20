@@ -34,6 +34,7 @@ $(function () {
       // disable the button
       $('#mailsend').text('Mail sent');
       $('#mailsend').addClass('disabled');
+      $('#mailsend').prop('disabled', true);
     }
   });
 
