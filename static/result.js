@@ -63,10 +63,14 @@ $(function () {
 
   // Directives for Transparency template engine
   var directives_detail = {
-    seq_id: {
+    // root for each result
+    result: {
       id: function(params) {
         return 'Detail_' + this.seq_id;
       },
+    },
+    // individual elements in a result
+    seq_id: {
       text: function(params) {
         return 'ID: ' + this.seq_id;
       }
